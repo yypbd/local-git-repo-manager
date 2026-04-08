@@ -152,9 +152,6 @@ onUnmounted(() => {
       <div class="settings-dialog" @click.stop>
         <header class="dialog-head">
           <h2 class="dialog-title">{{ $t("settings.title") }}</h2>
-          <UiButton type="button" size="sm" variant="secondary" @click="close">
-            {{ $t("workspace.close") }}
-          </UiButton>
         </header>
 
         <div class="dialog-scroll">
@@ -197,6 +194,9 @@ onUnmounted(() => {
         </div>
 
         <footer class="dialog-foot">
+          <UiButton type="button" variant="secondary" @click="close">
+            {{ $t("workspace.close") }}
+          </UiButton>
           <UiButton type="button" variant="primary" @click="save">{{ $t("settings.save") }}</UiButton>
         </footer>
       </div>
@@ -261,6 +261,7 @@ onUnmounted(() => {
   border-top: 1px solid var(--color-border, #2f3542);
   flex-shrink: 0;
   display: flex;
+  gap: 8px;
   justify-content: flex-end;
 }
 
