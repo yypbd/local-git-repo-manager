@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Local Git Repo Manager",
-  "version": "0.1.0",
-  "identifier": "com.localgitrepomanager.app",
+  "version": "1.0.0",
+  "identifier": "com.yypbd.app.localgitrepomanager",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
