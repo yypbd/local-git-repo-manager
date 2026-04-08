@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { FolderRootRow } from "@/composables/useFolderRootRows";
-import { folderNameFromPath } from "@/composables/useFolderRootRows";
 import WorkingTreeStatusLabel from "@/components/workspace/WorkingTreeStatusLabel.vue";
 import GitStatusPathList from "@/components/workspace/GitStatusPathList.vue";
 import { invoke } from "@tauri-apps/api/core";
@@ -12,6 +11,14 @@ const props = defineProps<{
   path: string | null;
   row: FolderRootRow | undefined;
   loading: boolean;
+  canPathActions?: boolean;
+  revealLabelKey?: string;
+}>();
+const emit = defineEmits<{
+  copyPath: [];
+  copyRemote: [];
+  revealPath: [];
+  openExternal: [];
 }>();
 const { path, row, loading } = toRefs(props);
 
@@ -178,12 +185,42 @@ const displayBranchName = computed(() => {
       <template v-else>
         <dl class="fields">
           <div class="field">
-            <dt>{{ $t("workspace.folderName") }}</dt>
-            <dd>{{ folderNameFromPath(path) }}</dd>
-          </div>
-          <div class="field">
             <dt>{{ $t("workspace.localPath") }}</dt>
-            <dd><code class="mono">{{ path }}</code></dd>
+            <dd>
+              <code class="mono">{{ path }}</code>
+              <div class="path-actions">
+                <UiButton
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  :disabled="!canPathActions"
+                  @click="emit('copyPath')"
+                >
+                  <span aria-hidden="true">📋</span>
+                  {{ $t("workspace.copyLocalPath") }}
+                </UiButton>
+                <UiButton
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  :disabled="!canPathActions"
+                  @click="emit('revealPath')"
+                >
+                  <span aria-hidden="true">🧭</span>
+                  {{ $t(revealLabelKey || "workspace.openInFileManager") }}
+                </UiButton>
+                <UiButton
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  :disabled="!canPathActions"
+                  @click="emit('openExternal')"
+                >
+                  <span aria-hidden="true">🚀</span>
+                  {{ $t("workspace.openExternalApp") }}
+                </UiButton>
+              </div>
+            </dd>
           </div>
           <div class="field">
             <dt>{{ $t("workspace.remotePath") }}</dt>
@@ -200,6 +237,18 @@ const displayBranchName = computed(() => {
                 </small>
               </span>
               <span v-else class="muted">{{ $t("workspace.remoteNoOrigin") }}</span>
+              <div class="path-actions">
+                <UiButton
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  :disabled="!row?.remote || !!row?.gitError"
+                  @click="emit('copyRemote')"
+                >
+                  <span aria-hidden="true">🔗</span>
+                  {{ $t("workspace.copyUrlMenu") }}
+                </UiButton>
+              </div>
             </dd>
           </div>
           <div class="field">
@@ -405,6 +454,13 @@ dd {
 .mono {
   word-break: break-all;
   font-size: 0.78rem;
+}
+
+.path-actions {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .remote-more {

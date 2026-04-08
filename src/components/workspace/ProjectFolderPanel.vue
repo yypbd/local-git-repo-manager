@@ -38,6 +38,15 @@ const selectedFolderPaths = defineModel<string[]>("selectedFolderPaths", {
 const { projects, syncFromBackend } = useProjectsStore();
 const { push: toast } = useToastStore();
 const { t } = useI18n();
+type ExternalTool = { id: string; label: string; command: string; argsTemplate: string };
+const externalTools = ref<ExternalTool[]>([]);
+const showExternalPicker = ref(false);
+const platformName = (typeof navigator !== "undefined" ? navigator.userAgent : "").toLowerCase();
+const revealLabelKey = computed(() => {
+  if (platformName.includes("mac")) return "workspace.openInFinder";
+  if (platformName.includes("win")) return "workspace.openInExplorer";
+  return "workspace.openInFileManager";
+});
 
 const rootPathsRef = computed(() => props.project?.rootPaths ?? []);
 const rows = computed(() => props.rows);
@@ -153,6 +162,96 @@ const canRemove = computed(() => Boolean(props.project && selectedFolderPaths.va
 const singleSelectedPath = computed(() =>
   selectedFolderPaths.value.length === 1 ? selectedFolderPaths.value[0]! : null,
 );
+const canPathActions = computed(() => Boolean(singleSelectedPath.value));
+
+const loadExternalTools = async () => {
+  try {
+    const s = await invoke<{ externalTools?: ExternalTool[] }>("get_settings");
+    externalTools.value = s.externalTools ?? [];
+  } catch {
+    externalTools.value = [];
+  }
+};
+
+const usableExternalTools = computed(() => externalTools.value.filter((x) => x.command?.trim()));
+
+const runExternalWithTool = async (tool: ExternalTool) => {
+  const p = singleSelectedPath.value;
+  if (!p) return;
+  const cmd = tool.command.trim();
+  if (!cmd) {
+    toast(t("workspace.externalOpenBadTool"), "error");
+    return;
+  }
+  try {
+    const tpl = tool.argsTemplate?.trim();
+    await invoke("open_external", {
+      path: p,
+      command: cmd,
+      argsTemplate: tpl ? tpl : null,
+    });
+    showExternalPicker.value = false;
+  } catch (e) {
+    toast(e instanceof Error ? e.message : String(e), "error");
+  }
+};
+
+const openExternal = async () => {
+  const p = singleSelectedPath.value;
+  if (!p) {
+    toast(t("workspace.actionNeedsFolder"), "error");
+    return;
+  }
+  await loadExternalTools();
+  const tools = usableExternalTools.value;
+  if (tools.length === 0) {
+    toast(t("workspace.externalOpenNoTools"), "error");
+    return;
+  }
+  if (tools.length === 1) {
+    await runExternalWithTool(tools[0]!);
+    return;
+  }
+  showExternalPicker.value = true;
+};
+
+const copyPathInvoke = async () => {
+  const p = singleSelectedPath.value;
+  if (!p) {
+    toast(t("workspace.actionNeedsFolder"), "error");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(p);
+    toast(t("workspace.copyDone"), "success");
+  } catch {
+    toast(t("workspace.clipboardCopyFailed"), "error");
+  }
+};
+
+const copyRemote = async () => {
+  const row = selectedRow.value;
+  const remote = row?.remote?.trim();
+  if (!remote || row?.gitError) {
+    toast(t("workspace.copyRemoteUnavailable"), "error");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(remote);
+    toast(t("workspace.copyRemoteSuccess"), "success");
+  } catch {
+    toast(t("workspace.clipboardCopyFailed"), "error");
+  }
+};
+
+const revealPath = async () => {
+  const p = singleSelectedPath.value;
+  if (!p) {
+    toast(t("workspace.actionNeedsFolder"), "error");
+    return;
+  }
+  await invoke("reveal_path", { path: p });
+};
 
 const addFolder = async () => {
   const paths = await pickDirectories();
@@ -348,6 +447,18 @@ watchEffect((onCleanup) => {
   window.addEventListener("keydown", h, true);
   onCleanup(() => window.removeEventListener("keydown", h, true));
 });
+
+watchEffect((onCleanup) => {
+  if (!showExternalPicker.value) return;
+  const h = (e: KeyboardEvent) => {
+    if (e.key !== "Escape") return;
+    e.preventDefault();
+    e.stopPropagation();
+    showExternalPicker.value = false;
+  };
+  window.addEventListener("keydown", h, true);
+  onCleanup(() => window.removeEventListener("keydown", h, true));
+});
 </script>
 
 <template>
@@ -458,6 +569,12 @@ watchEffect((onCleanup) => {
             :path="selectedFolderPath"
             :row="selectedRow"
             :loading="loading"
+            :can-path-actions="canPathActions"
+            :reveal-label-key="revealLabelKey"
+            @copy-path="copyPathInvoke"
+            @copy-remote="copyRemote"
+            @reveal-path="revealPath"
+            @open-external="openExternal"
           />
         </div>
       </div>
@@ -501,6 +618,28 @@ watchEffect((onCleanup) => {
       @close="moveModalOpen = false"
       @submit="moveRootToProject"
     />
+
+    <div
+      v-if="showExternalPicker"
+      class="backdrop modal-backdrop"
+      @click.self="showExternalPicker = false"
+    >
+      <div class="dialog external-picker-dialog" @click.stop>
+        <h3>{{ $t("workspace.externalOpenPickTitle") }}</h3>
+        <ul class="path-list">
+          <li v-for="tool in usableExternalTools" :key="tool.id">
+            <UiButton type="button" size="sm" variant="secondary" @click="runExternalWithTool(tool)">
+              {{ tool.label?.trim() || tool.command }}
+            </UiButton>
+          </li>
+        </ul>
+        <div class="dialog-actions">
+          <UiButton type="button" size="sm" variant="secondary" @click="showExternalPicker = false">
+            {{ $t("workspace.cancel") }}
+          </UiButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
