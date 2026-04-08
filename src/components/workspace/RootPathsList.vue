@@ -154,11 +154,15 @@ function onRowClick(path: string, e: MouseEvent) {
         <div class="tail">
           <span class="branch">{{ loading ? "…" : (rowByPath[path]?.branch ?? "—") }}</span>
           <span class="dash" aria-hidden="true">-</span>
-          <span class="status" :class="{ dirty: rowByPath[path] && !rowByPath[path]!.gitError && !rowByPath[path]!.clean }">
+          <span class="status">
             <template v-if="loading">…</template>
             <template v-else-if="!rowByPath[path]">—</template>
-            <template v-else-if="rowByPath[path]!.gitError">{{ $t("workspace.notGitRepo") }}</template>
-            <template v-else-if="rowByPath[path]!.clean">{{ $t("workspace.statusClean") }}</template>
+            <template v-else-if="rowByPath[path]!.gitError">
+              <span class="status-tag status-tag--non-git">{{ $t("workspace.notGitRepo") }}</span>
+            </template>
+            <template v-else-if="rowByPath[path]!.clean">
+              <span class="status-tag status-tag--clean">{{ $t("workspace.statusClean") }}</span>
+            </template>
             <template v-else>
               <WorkingTreeStatusLabel
                 :tracked-changes="rowByPath[path]!.trackedChanges"
@@ -317,6 +321,30 @@ function onRowClick(path: string, e: MouseEvent) {
 
 .status {
   font-size: 0.68rem;
+}
+
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0 6px;
+  min-height: 18px;
+  line-height: 1;
+  font-size: 0.64rem;
+  font-weight: 600;
+}
+
+.status-tag--clean {
+  color: #86efac;
+  border-color: rgb(34 197 94 / 35%);
+  background: rgb(34 197 94 / 14%);
+}
+
+.status-tag--non-git {
+  color: #cbd5e1;
+  border-color: rgb(148 163 184 / 35%);
+  background: rgb(148 163 184 / 14%);
 }
 
 .status.dirty {

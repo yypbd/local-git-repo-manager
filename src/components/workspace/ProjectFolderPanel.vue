@@ -542,6 +542,11 @@ watchEffect((onCleanup) => {
             <option value="git">{{ $t("workspace.filterGitRepo") }}</option>
             <option value="non_git">{{ $t("workspace.filterNotGitRepo") }}</option>
           </UiSelect>
+          <div class="status-legend" :aria-label="$t('workspace.statusLabel')">
+            <span class="legend-badge legend-badge--clean">{{ $t("workspace.statusClean") }}</span>
+            <span class="legend-badge legend-badge--dirty">M/U</span>
+            <span class="legend-badge legend-badge--non-git">{{ $t("workspace.notGitRepo") }}</span>
+          </div>
         </div>
       </div>
 
@@ -711,6 +716,44 @@ watchEffect((onCleanup) => {
   border: 1px solid var(--color-border);
   background: #111827;
   color: inherit;
+}
+
+.status-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  flex-wrap: wrap;
+}
+
+.legend-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0 6px;
+  min-height: 18px;
+  font-size: 0.64rem;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.legend-badge--clean {
+  color: #86efac;
+  border-color: rgb(34 197 94 / 35%);
+  background: rgb(34 197 94 / 14%);
+}
+
+.legend-badge--dirty {
+  color: #fbbf24;
+  border-color: rgb(245 158 11 / 35%);
+  background: rgb(245 158 11 / 14%);
+}
+
+.legend-badge--non-git {
+  color: #cbd5e1;
+  border-color: rgb(148 163 184 / 35%);
+  background: rgb(148 163 184 / 14%);
 }
 
 .toolbar-actions :deep(button) {
