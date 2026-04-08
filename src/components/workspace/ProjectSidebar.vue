@@ -239,7 +239,7 @@ onUnmounted(() => {
       <div class="sidebar">
         <div class="sidebar-head">
           <h2 class="title">{{ $t("workspace.projectsPanel") }}</h2>
-          <button type="button" @click="creating = true">+</button>
+          <UiButton type="button" size="sm" variant="secondary" @click="creating = true">+</UiButton>
         </div>
 
         <ProjectListEmpty v-if="!hasProjects" @create="creating = true" />

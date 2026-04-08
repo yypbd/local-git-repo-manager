@@ -2,6 +2,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { onMounted, ref } from "vue";
 import GitLogEntry from "@/components/git/GitLogEntry.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 withDefaults(
   defineProps<{
@@ -40,10 +41,10 @@ onMounted(() => {
   <aside class="log-panel" :class="variant" :style="variant === 'sidebar' ? { width: `${width}px` } : undefined">
     <h3 v-if="variant === 'sidebar'">{{ $t("nav.logs") }}</h3>
     <div class="tools">
-      <button type="button" @click="refresh">새로고침</button>
+      <UiButton type="button" size="sm" variant="secondary" @click="refresh">새로고침</UiButton>
       <template v-if="variant === 'sidebar'">
-        <button type="button" @click="narrow">-</button>
-        <button type="button" @click="widen">+</button>
+        <UiButton type="button" size="sm" variant="secondary" @click="narrow">-</UiButton>
+        <UiButton type="button" size="sm" variant="secondary" @click="widen">+</UiButton>
       </template>
     </div>
     <div class="entries">

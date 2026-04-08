@@ -3,6 +3,8 @@
   --color-text: #e5e7eb;
   --color-border: #2f3542;
   --color-surface-muted: #151925;
+  --ui-control-bg: #161b29;
+  --ui-control-focus-ring: rgb(59 130 246 / 20%);
   --font-family-base: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --space-1: 4px;
   --space-2: 8px;
@@ -58,6 +60,41 @@ button {
   min-height: var(--btn-height-md);
   font-size: var(--btn-font-md);
   line-height: 1;
+}
+
+.ui-control {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--ui-control-bg);
+  color: var(--color-text);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.ui-control:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px var(--ui-control-focus-ring);
+}
+
+.ui-control::placeholder {
+  color: #6b7280;
+}
+
+.ui-control-md {
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  min-height: 34px;
+}
+
+.ui-control-sm {
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  min-height: 26px;
+}
+
+.ui-textarea {
+  resize: vertical;
 }
 
 .btn {

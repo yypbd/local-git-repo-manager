@@ -2,6 +2,8 @@
 import { useI18n } from "vue-i18n";
 import { pickExecutableFile } from "@/composables/pickFolder";
 import { executableDisplayName } from "@/utils/pathBasename";
+import UiInput from "@/components/ui/UiInput.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 type Tool = { id: string; label: string; command: string; argsTemplate: string };
 
@@ -43,9 +45,9 @@ const browseExecutable = async (tool: Tool) => {
 
     <div v-if="!tools.length" class="empty-tools">
       <p class="empty-text">{{ $t("settings.externalToolsEmpty") }}</p>
-      <button type="button" class="btn-primary" @click="emit('add')">
+      <UiButton type="button" size="sm" variant="primary" @click="emit('add')" class="btn-primary">
         {{ $t("settings.externalToolsAdd") }}
-      </button>
+      </UiButton>
     </div>
 
     <template v-else>
@@ -55,46 +57,46 @@ const browseExecutable = async (tool: Tool) => {
           <div class="fields">
             <label class="field">
               <span>{{ $t("settings.externalToolsLabel") }}</span>
-              <input
+              <UiInput
                 type="text"
-                :value="tool.label"
                 :placeholder="t('settings.externalToolsLabelPh')"
-                @input="onPatch(tool.id, 'label', ($event.target as HTMLInputElement).value)"
+                :model-value="tool.label"
+                @update:modelValue="onPatch(tool.id, 'label', $event)"
               />
             </label>
             <label class="field">
               <span>{{ $t("settings.externalToolsCommand") }}</span>
               <div class="command-row">
-                <input
+                <UiInput
                   type="text"
                   class="command-input"
-                  :value="tool.command"
                   :placeholder="t('settings.externalToolsCommandPh')"
-                  @input="onPatch(tool.id, 'command', ($event.target as HTMLInputElement).value)"
+                  :model-value="tool.command"
+                  @update:modelValue="onPatch(tool.id, 'command', $event)"
                 />
-                <button type="button" class="btn-browse" @click="browseExecutable(tool)">
+                <UiButton type="button" size="sm" variant="secondary" class="btn-browse" @click="browseExecutable(tool)">
                   {{ $t("settings.externalToolsBrowse") }}
-                </button>
+                </UiButton>
               </div>
             </label>
             <label class="field field-wide">
               <span>{{ $t("settings.externalToolsArgs") }}</span>
-              <input
+              <UiInput
                 type="text"
-                :value="tool.argsTemplate"
                 placeholder="$PATH"
-                @input="onPatch(tool.id, 'argsTemplate', ($event.target as HTMLInputElement).value)"
+                :model-value="tool.argsTemplate"
+                @update:modelValue="onPatch(tool.id, 'argsTemplate', $event)"
               />
             </label>
           </div>
-          <button type="button" class="btn-remove" @click="emit('remove', tool.id)">
+          <UiButton type="button" size="sm" variant="danger" class="btn-remove" @click="emit('remove', tool.id)">
             {{ $t("settings.externalToolsRemove") }}
-          </button>
+          </UiButton>
         </li>
       </ul>
-      <button type="button" class="btn-add-more" @click="emit('add')">
+      <UiButton type="button" size="sm" variant="secondary" class="btn-add-more" @click="emit('add')">
         {{ $t("settings.externalToolsAddAnother") }}
-      </button>
+      </UiButton>
     </template>
   </section>
 </template>
@@ -198,11 +200,7 @@ const browseExecutable = async (tool: Tool) => {
   color: #9ca3af;
 }
 
-.field input {
-  font-size: 0.9rem;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--color-border, #2a3142);
+.field :deep(.ui-control) {
   background: rgb(0 0 0 / 25%);
   color: inherit;
   min-width: 0;

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import UiInput from "@/components/ui/UiInput.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 type TemplateItem = { name: string; content: string };
 const props = withDefaults(
@@ -24,52 +26,56 @@ const filtered = computed(() =>
   <section class="picker" :class="{ compact }">
     <template v-if="compact">
       <div class="toolbar">
-        <input
+        <UiInput
           v-model="query"
           class="search"
           type="search"
           :placeholder="$t('workspace.templateSearchPlaceholder')"
         />
-        <button
+        <UiButton
           type="button"
           class="sync"
+          size="sm"
+          variant="secondary"
           :disabled="syncing"
           @click="emit('sync')"
         >
           {{ syncing ? $t("workspace.templateSyncing") : $t("workspace.templateSync") }}
-        </button>
+        </UiButton>
       </div>
       <div class="chips-scroll">
         <div class="chips">
-          <button
+          <UiButton
             v-for="item in filtered"
             :key="item.name"
             type="button"
             class="chip"
+            size="sm"
+            variant="secondary"
             :title="item.name"
             @click="emit('apply', item.content)"
           >
             {{ item.name }}
-          </button>
+          </UiButton>
         </div>
       </div>
     </template>
     <template v-else>
       <h4 class="picker-title">{{ $t("workspace.templatesHeading") }}</h4>
-      <input
+      <UiInput
         v-model="query"
         class="search-wide"
         type="search"
         :placeholder="$t('workspace.templateSearchPlaceholder')"
       />
-      <button type="button" class="sync-wide" :disabled="syncing" @click="emit('sync')">
+      <UiButton type="button" class="sync-wide" size="sm" variant="secondary" :disabled="syncing" @click="emit('sync')">
         {{ syncing ? $t("workspace.templateSyncing") : $t("workspace.templateSync") }}
-      </button>
+      </UiButton>
       <ul>
         <li v-for="item in filtered" :key="item.name">
           <strong>{{ item.name }}</strong>
           <pre>{{ item.content }}</pre>
-          <button type="button" @click="emit('apply', item.content)">적용</button>
+          <UiButton type="button" size="sm" variant="secondary" @click="emit('apply', item.content)">적용</UiButton>
         </li>
       </ul>
     </template>

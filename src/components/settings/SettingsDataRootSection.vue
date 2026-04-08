@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { pickDirectory } from "@/composables/pickFolder";
+import UiInput from "@/components/ui/UiInput.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 const props = defineProps<{
   dataRootPath: string;
@@ -27,24 +29,24 @@ const useRecommended = () => {
   <section class="settings-block">
     <h4>{{ $t("settings.dataRootHeading") }}</h4>
     <div class="path-row">
-      <input
-        :value="dataRootPath"
-        type="text"
+      <UiInput
+        :model-value="dataRootPath"
         spellcheck="false"
         autocomplete="off"
-        @input="emit('update', ($event.target as HTMLInputElement).value)"
+        @update:model-value="emit('update', $event)"
       />
-      <button type="button" class="btn btn-sm btn-secondary" @click="pickFolder">
+      <UiButton type="button" size="sm" variant="secondary" @click="pickFolder">
         {{ $t("settings.dataRootPickFolder") }}
-      </button>
-      <button
+      </UiButton>
+      <UiButton
         type="button"
-        class="btn btn-sm btn-secondary"
+        size="sm"
+        variant="secondary"
         :disabled="!hasRecommended"
         @click="useRecommended"
       >
         {{ $t("settings.dataRootUseRecommended") }}
-      </button>
+      </UiButton>
     </div>
   </section>
 </template>
@@ -63,15 +65,8 @@ const useRecommended = () => {
   align-items: stretch;
 }
 
-.path-row input {
+.path-row :deep(.ui-control) {
   flex: 1;
   min-width: 12rem;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: #161b29;
-  color: var(--color-text);
-  padding: 8px 10px;
-  font-size: 0.9rem;
-  box-sizing: border-box;
 }
 </style>

@@ -13,6 +13,7 @@ import RemoteManagerDialog from "@/components/git/RemoteManagerDialog.vue";
 import ArchiveDialog from "@/components/git/ArchiveDialog.vue";
 import GitignoreEditor from "@/components/git/GitignoreEditor.vue";
 import TemplatePicker from "@/components/git/TemplatePicker.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 type ExternalTool = { id: string; label: string; command: string; argsTemplate: string };
 
@@ -233,74 +234,81 @@ watchEffect((onCleanup) => {
     <template v-else>
       <div class="actions-footer">
         <div class="action-row action-row--primary">
-          <button
+          <UiButton
             type="button"
-            class="btn btn-sm btn-secondary"
+            size="sm"
+            variant="secondary"
             :disabled="!hasSelectedFolder"
             @click="copyPathInvoke"
           >
             <span aria-hidden="true">📋</span>
             {{ $t("workspace.copyLocalPath") }}
-          </button>
+          </UiButton>
 
-          <button
+          <UiButton
             type="button"
-            class="btn btn-sm btn-secondary"
+            size="sm"
+            variant="secondary"
             :disabled="!canCopyRemoteUrl"
             @click="copyRemote"
           >
             <span aria-hidden="true">🔗</span>
             {{ $t("workspace.copyUrlMenu") }}
-          </button>
+          </UiButton>
 
-          <button
+          <UiButton
             type="button"
-            class="btn btn-sm btn-secondary"
+            size="sm"
+            variant="secondary"
             :disabled="!hasSelectedFolder"
             @click="revealPath"
           >
             <span aria-hidden="true">🧭</span>
             {{ $t(revealButtonLabelKey) }}
-          </button>
-          <button
+          </UiButton>
+          <UiButton
             type="button"
-            class="btn btn-sm btn-secondary"
+            size="sm"
+            variant="secondary"
             :disabled="!hasSelectedFolder"
             @click="openExternal"
           >
             <span aria-hidden="true">🚀</span>
             {{ $t("workspace.openExternalApp") }}
-          </button>
+          </UiButton>
         </div>
 
         <div class="action-row action-row--secondary">
-          <button
+          <UiButton
             type="button"
-            class="btn btn-sm btn-secondary"
+            size="sm"
+            variant="secondary"
             :disabled="!canRemoteManage"
             @click="showRemote = true"
           >
             <span aria-hidden="true">🌐</span>
             {{ $t("workspace.actionRemoteManager") }}
-          </button>
-          <button
+          </UiButton>
+          <UiButton
             type="button"
-            class="btn btn-sm btn-secondary"
+            size="sm"
+            variant="secondary"
             :disabled="!canArchive"
             @click="showArchive = true"
           >
             <span aria-hidden="true">🗜️</span>
             {{ $t("workspace.actionArchive") }}
-          </button>
-          <button
+          </UiButton>
+          <UiButton
             type="button"
-            class="btn btn-sm btn-secondary"
+            size="sm"
+            variant="secondary"
             :disabled="!canEditGitignore"
             @click="openGitignoreModal"
           >
             <span aria-hidden="true">✍️</span>
             {{ $t("workspace.editGitignore") }}
-          </button>
+          </UiButton>
         </div>
       </div>
     </template>
@@ -326,7 +334,9 @@ watchEffect((onCleanup) => {
           @cancel="showGitignoreModal = false"
         />
         <div class="dialog-actions">
-          <button type="button" class="btn btn-sm btn-secondary" @click="showGitignoreModal = false">{{ $t("workspace.close") }}</button>
+          <UiButton type="button" size="sm" variant="secondary" @click="showGitignoreModal = false">
+            {{ $t("workspace.close") }}
+          </UiButton>
         </div>
       </div>
     </div>
@@ -352,13 +362,15 @@ watchEffect((onCleanup) => {
         <h3 class="dialog-title">{{ $t("workspace.externalOpenPickTitle") }}</h3>
         <ul class="external-tool-list">
           <li v-for="tool in usableExternalTools" :key="tool.id">
-            <button type="button" class="btn-tool" @click="runExternalWithTool(tool)">
+            <UiButton type="button" class="btn-tool" size="sm" variant="secondary" @click="runExternalWithTool(tool)">
               {{ tool.label?.trim() || tool.command }}
-            </button>
+            </UiButton>
           </li>
         </ul>
         <div class="dialog-actions">
-          <button type="button" class="btn btn-sm btn-secondary" @click="showExternalPicker = false">{{ $t("workspace.cancel") }}</button>
+          <UiButton type="button" size="sm" variant="secondary" @click="showExternalPicker = false">
+            {{ $t("workspace.cancel") }}
+          </UiButton>
         </div>
       </div>
     </div>

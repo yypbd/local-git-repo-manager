@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useToastStore } from "@/stores/toast";
+import UiButton from "@/components/ui/UiButton.vue";
 
 const { items, remove } = useToastStore();
 </script>
@@ -8,7 +9,7 @@ const { items, remove } = useToastStore();
   <div class="toast-wrap">
     <div v-for="item in items" :key="item.id" class="toast" :data-type="item.type">
       <span>{{ item.message }}</span>
-      <button @click="remove(item.id)">닫기</button>
+      <UiButton type="button" size="sm" variant="secondary" @click="remove(item.id)">닫기</UiButton>
     </div>
   </div>
 </template>

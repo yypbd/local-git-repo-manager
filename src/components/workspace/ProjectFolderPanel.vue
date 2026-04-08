@@ -6,6 +6,8 @@ import FolderDropZone from "@/components/FolderDropZone.vue";
 import FolderSelectionDetail from "@/components/workspace/FolderSelectionDetail.vue";
 import RootPathsList from "@/components/workspace/RootPathsList.vue";
 import MoveRootToProjectModal from "@/components/tree/MoveRootToProjectModal.vue";
+import UiSelect from "@/components/ui/UiSelect.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 import { pickDirectories } from "@/composables/pickFolder";
 import {
   lookupFolderRow,
@@ -44,6 +46,11 @@ const reload = () => props.reload();
 const confirmRemove = ref(false);
 const confirmGitRemove = ref(false);
 const moveModalOpen = ref(false);
+
+const hasOtherProjects = computed(() => {
+  if (!props.project) return false;
+  return projects.value.some((p) => p.id !== props.project?.id);
+});
 
 /** Shift 범위 선택 앵커 */
 const selectionAnchorPath = ref<string | null>(null);
@@ -285,6 +292,7 @@ const openMoveProjectModal = () => {
     toast(t("workspace.actionNeedsFolder"), "error");
     return;
   }
+  if (!hasOtherProjects.value) return;
   moveModalOpen.value = true;
 };
 
@@ -355,69 +363,74 @@ watchEffect((onCleanup) => {
     <template v-else>
       <div class="folder-toolbar">
         <div class="toolbar-actions">
-          <button type="button" class="btn btn-sm btn-primary" @click="addFolder">
+          <UiButton type="button" size="sm" variant="primary" @click="addFolder">
             <span aria-hidden="true">➕</span>
             {{ $t("workspace.addFolder") }}
-          </button>
-          <button
+          </UiButton>
+          <UiButton
             type="button"
-            class="btn btn-sm btn-secondary"
+            size="sm"
+            variant="secondary"
             :disabled="!project.rootPaths.length || loading"
             @click="reload()"
           >
             <span aria-hidden="true">🔄</span>
             {{ $t("workspace.refreshFolderInfo") }}
-          </button>
-          <button
+          </UiButton>
+          <UiButton
             type="button"
-            class="btn btn-sm btn-secondary"
-            :disabled="!singleSelectedPath || loading"
+            size="sm"
+            variant="secondary"
+            :disabled="!singleSelectedPath || loading || !hasOtherProjects"
             @click="openMoveProjectModal"
           >
             <span aria-hidden="true">📦</span>
             {{ $t("workspace.moveRootToOtherProject") }}
-          </button>
-          <button
+          </UiButton>
+          <UiButton
             type="button"
-            class="btn btn-sm btn-danger"
+            size="sm"
+            variant="danger"
             :disabled="!canRemove"
             @click="removeSelected"
           >
             <span aria-hidden="true">🗑️</span>
             {{ $t("workspace.deleteSelected") }}
-          </button>
-          <button
+          </UiButton>
+          <UiButton
             type="button"
-            class="btn btn-sm btn-success"
+            size="sm"
+            variant="success"
             :disabled="!canGitInit"
             @click="runGitInit"
           >
             <span aria-hidden="true">🌱</span>
             {{ $t("workspace.gitInit") }}
-          </button>
-          <button
+          </UiButton>
+          <UiButton
             type="button"
-            class="btn btn-sm btn-danger"
+            size="sm"
+            variant="danger"
             :disabled="!canGitRemoveRepo"
             @click="openGitRemoveConfirm"
           >
             <span aria-hidden="true">⚠️</span>
             {{ $t("workspace.gitRemoveRepo") }}
-          </button>
+          </UiButton>
         </div>
         <div class="toolbar-filter">
           <label class="filter-label" for="folder-view-mode">{{ $t("workspace.viewModeLabel") }}</label>
-          <select id="folder-view-mode" v-model="folderViewMode" class="filter-select">
+          <UiSelect id="folder-view-mode" v-model="folderViewMode" class="filter-select" size="sm">
             <option value="list">{{ $t("workspace.viewModeList") }}</option>
             <option value="icon">{{ $t("workspace.viewModeIcon") }}</option>
-          </select>
+          </UiSelect>
           <label class="filter-label" for="folder-filter">{{ $t("workspace.filterLabel") }}</label>
-          <select id="folder-filter" v-model="filterMode" class="filter-select">
+          <UiSelect id="folder-filter" v-model="filterMode" class="filter-select" size="sm">
             <option value="all">{{ $t("workspace.filterAll") }}</option>
             <option value="remote">{{ $t("workspace.filterRemoteConnected") }}</option>
             <option value="git">{{ $t("workspace.filterGitRepo") }}</option>
             <option value="non_git">{{ $t("workspace.filterNotGitRepo") }}</option>
-          </select>
+          </UiSelect>
         </div>
       </div>
 
@@ -464,8 +477,8 @@ watchEffect((onCleanup) => {
           <li v-for="rp in pathsToRemove" :key="rp"><code>{{ rp }}</code></li>
         </ul>
         <div class="dialog-actions">
-          <button type="button" class="btn btn-sm btn-secondary" @click="confirmRemove = false">{{ $t("workspace.cancel") }}</button>
-          <button type="button" class="btn btn-sm btn-danger" @click="confirmRemoveDo">{{ $t("workspace.remove") }}</button>
+          <UiButton type="button" size="sm" variant="secondary" @click="confirmRemove = false">{{ $t("workspace.cancel") }}</UiButton>
+          <UiButton type="button" size="sm" variant="danger" @click="confirmRemoveDo">{{ $t("workspace.remove") }}</UiButton>
         </div>
       </div>
     </div>
@@ -476,8 +489,8 @@ watchEffect((onCleanup) => {
         <p class="msg">{{ $t("workspace.gitRemoveRepoMessage") }}</p>
         <p v-if="singleSelectedPath" class="path-preview"><code>{{ singleSelectedPath }}</code></p>
         <div class="dialog-actions">
-          <button type="button" class="btn btn-sm btn-secondary" @click="confirmGitRemove = false">{{ $t("workspace.cancel") }}</button>
-          <button type="button" class="btn btn-sm btn-danger" @click="doGitRemoveDotGit">{{ $t("workspace.gitRemoveRepoConfirm") }}</button>
+          <UiButton type="button" size="sm" variant="secondary" @click="confirmGitRemove = false">{{ $t("workspace.cancel") }}</UiButton>
+          <UiButton type="button" size="sm" variant="danger" @click="doGitRemoveDotGit">{{ $t("workspace.gitRemoveRepoConfirm") }}</UiButton>
         </div>
       </div>
     </div>
@@ -541,17 +554,21 @@ watchEffect((onCleanup) => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .filter-label {
   font-size: 0.72rem;
   opacity: 0.8;
+  white-space: nowrap;
 }
 
 .filter-select {
   height: 24px;
   font-size: 0.74rem;
   border-radius: 6px;
+  width: auto;
+  min-width: 92px;
   border: 1px solid var(--color-border);
   background: #111827;
   color: inherit;

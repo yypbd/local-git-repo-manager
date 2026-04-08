@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import SettingsDialog from "@/components/settings/SettingsDialog.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 const showSettings = ref(false);
 </script>
@@ -13,10 +14,10 @@ const showSettings = ref(false);
         {{ $t("app.title") }}
       </strong>
       <div class="toolbar-actions">
-        <button type="button" class="btn btn-sm btn-secondary" @click="showSettings = true">
+        <UiButton type="button" size="sm" variant="secondary" @click="showSettings = true">
           <span class="ico" aria-hidden="true">⚙️</span>
           {{ $t("nav.settings") }}
-        </button>
+        </UiButton>
       </div>
     </header>
 
@@ -71,7 +72,7 @@ const showSettings = ref(false);
   gap: 6px;
 }
 
-.toolbar-actions button {
+.toolbar-actions :deep(.btn) {
   display: inline-flex;
   align-items: center;
   gap: 6px;

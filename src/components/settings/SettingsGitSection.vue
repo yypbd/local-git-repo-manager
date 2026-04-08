@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { pickExecutableFile } from "@/composables/pickFolder";
+import UiInput from "@/components/ui/UiInput.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 defineProps<{ gitExecutablePath: string; gitVersion: string }>();
 const emit = defineEmits<{ updatePath: [path: string]; probe: [] }>();
@@ -14,22 +16,21 @@ const pickGitExecutable = async () => {
   <section class="settings-block">
     <h4>{{ $t("settings.gitHeading") }}</h4>
     <div class="path-row">
-      <input
-        :value="gitExecutablePath"
-        type="text"
+      <UiInput
+        :model-value="gitExecutablePath"
         spellcheck="false"
         autocomplete="off"
         :placeholder="$t('settings.gitExecutablePlaceholder')"
-        @input="emit('updatePath', ($event.target as HTMLInputElement).value)"
+        @update:model-value="emit('updatePath', $event)"
       />
-      <button type="button" class="btn btn-sm btn-secondary" @click="pickGitExecutable">
+      <UiButton type="button" size="sm" variant="secondary" @click="pickGitExecutable">
         {{ $t("settings.gitPickExecutable") }}
-      </button>
+      </UiButton>
     </div>
     <div class="git-row">
-      <button type="button" class="btn btn-sm btn-secondary" @click="emit('probe')">
+      <UiButton type="button" size="sm" variant="secondary" @click="emit('probe')">
         {{ $t("settings.gitProbe") }}
-      </button>
+      </UiButton>
       <span class="git-ver">{{ gitVersion || $t("settings.gitVersionUnknown") }}</span>
     </div>
   </section>
@@ -49,16 +50,9 @@ const pickGitExecutable = async () => {
   align-items: stretch;
 }
 
-.path-row input {
+.path-row :deep(.ui-control) {
   flex: 1;
   min-width: 12rem;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: #161b29;
-  color: var(--color-text);
-  padding: 8px 10px;
-  font-size: 0.9rem;
-  box-sizing: border-box;
 }
 
 .git-row {

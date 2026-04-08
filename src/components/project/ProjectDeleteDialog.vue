@@ -3,8 +3,9 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { Project } from "@/stores/projects";
 import { useDialogEnterConfirm, useDialogEscape } from "@/composables/useDialogShortcuts";
+import UiButton from "@/components/ui/UiButton.vue";
 
-const props = defineProps<{ project: Project }>();
+const props = defineProps<{ project: Project; hasOtherProjects: boolean }>();
 const emit = defineEmits<{
   close: [];
   deleteOnly: [];
@@ -17,7 +18,7 @@ const rootCount = computed(() => props.project.rootPaths.length);
 
 useDialogEscape(() => emit("close"));
 useDialogEnterConfirm(() => {
-  if (hasRoots.value) emit("moveThenDelete");
+  if (hasRoots.value && props.hasOtherProjects) emit("moveThenDelete");
   else emit("deleteOnly");
 });
 </script>
@@ -31,20 +32,26 @@ useDialogEnterConfirm(() => {
         {{ $t("workspace.projectDeleteRootsHint", { n: rootCount }) }}
       </p>
       <div class="actions">
-        <button type="button" class="btn-muted" @click="emit('close')">
+        <UiButton type="button" size="sm" variant="secondary" class="btn-muted" @click="emit('close')">
           {{ $t("workspace.cancel") }}
-        </button>
+        </UiButton>
         <template v-if="hasRoots">
-          <button type="button" @click="emit('moveThenDelete')">
+          <UiButton
+            type="button"
+            size="sm"
+            variant="secondary"
+            :disabled="!props.hasOtherProjects"
+            @click="emit('moveThenDelete')"
+          >
             {{ $t("workspace.projectDeleteMoveFirst") }}
-          </button>
-          <button type="button" class="btn-danger" @click="emit('deleteOnly')">
+          </UiButton>
+          <UiButton type="button" size="sm" variant="danger" @click="emit('deleteOnly')">
             {{ $t("workspace.projectDeleteUnlinkOnly") }}
-          </button>
+          </UiButton>
         </template>
-        <button v-else type="button" class="btn-danger" @click="emit('deleteOnly')">
+        <UiButton v-else type="button" size="sm" variant="danger" @click="emit('deleteOnly')">
           {{ $t("workspace.projectDeleteConfirm") }}
-        </button>
+        </UiButton>
       </div>
     </div>
   </div>
@@ -94,9 +101,5 @@ useDialogEnterConfirm(() => {
 
 .btn-muted {
   margin-right: auto;
-}
-
-.btn-danger {
-  border-color: #b45309;
 }
 </style>

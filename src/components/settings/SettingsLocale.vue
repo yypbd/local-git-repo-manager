@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from "@/components/ui/UiSelect.vue";
 defineProps<{ locale: string }>();
 const emit = defineEmits<{ update: [locale: string] }>();
 </script>
@@ -6,14 +7,14 @@ const emit = defineEmits<{ update: [locale: string] }>();
 <template>
   <section class="settings-block">
     <h4>{{ $t("settings.localeHeading") }}</h4>
-    <select
+    <UiSelect
       class="locale-select"
-      :value="locale"
-      @change="emit('update', ($event.target as HTMLSelectElement).value)"
+      :model-value="locale"
+      @update:modelValue="emit('update', $event)"
     >
       <option value="ko">{{ $t("settings.localeNameKo") }}</option>
       <option value="en">{{ $t("settings.localeNameEn") }}</option>
-    </select>
+    </UiSelect>
   </section>
 </template>
 
@@ -27,11 +28,5 @@ const emit = defineEmits<{ update: [locale: string] }>();
 .locale-select {
   max-width: 18rem;
   width: 100%;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: #161b29;
-  color: var(--color-text);
-  padding: 8px 10px;
-  font-size: 0.9rem;
 }
 </style>

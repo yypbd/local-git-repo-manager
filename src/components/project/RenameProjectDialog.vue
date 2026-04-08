@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useDialogEscape, useDialogInputFocus } from "@/composables/useDialogShortcuts";
+import UiInput from "@/components/ui/UiInput.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 const props = defineProps<{ initialName: string }>();
 const emit = defineEmits<{ close: []; submit: [name: string] }>();
 
 const name = ref(props.initialName);
-const inputRef = ref<HTMLInputElement | null>(null);
+const inputRef = ref<{ focus?: () => void } | null>(null);
 useDialogInputFocus(inputRef);
 useDialogEscape(() => emit("close"));
 
@@ -27,10 +29,10 @@ const submit = () => {
     <div class="dialog" @click.stop>
       <h3>프로젝트 이름 변경</h3>
       <form class="form" @submit.prevent="submit">
-        <input ref="inputRef" v-model="name" autocomplete="off" />
+        <UiInput ref="inputRef" v-model="name" autocomplete="off" />
         <div class="actions">
-          <button type="button" class="btn btn-sm btn-secondary" @click="emit('close')">취소</button>
-          <button type="submit" class="btn btn-sm btn-primary">저장</button>
+          <UiButton type="button" size="sm" variant="secondary" @click="emit('close')">취소</UiButton>
+          <UiButton type="submit" size="sm" variant="primary">저장</UiButton>
         </div>
       </form>
     </div>

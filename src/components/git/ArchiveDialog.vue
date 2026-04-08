@@ -6,6 +6,7 @@ import { pickDirectory } from "@/composables/pickFolder";
 import { useToastStore } from "@/stores/toast";
 import { useDialogEnterConfirm, useDialogEscape } from "@/composables/useDialogShortcuts";
 import { outputParentDirArgs, repoPathArgs } from "@/utils/tauriRepoPath";
+import UiButton from "@/components/ui/UiButton.vue";
 
 const props = defineProps<{ repoPath: string | null }>();
 const emit = defineEmits<{ close: [] }>();
@@ -60,17 +61,18 @@ useDialogEnterConfirm(
         <p class="body">{{ $t("workspace.archiveBody") }}</p>
         <p class="filename-hint">{{ $t("workspace.archiveFilenameHint") }}</p>
         <div class="actions">
-          <button type="button" class="btn-cancel" @click="emit('close')">
+          <UiButton type="button" size="sm" variant="secondary" @click="emit('close')">
             {{ $t("workspace.cancel") }}
-          </button>
-          <button
+          </UiButton>
+          <UiButton
             type="button"
-            class="btn-primary"
+            size="sm"
+            variant="primary"
             :disabled="!canExport || exporting"
             @click="pickAndExport"
           >
             {{ exporting ? $t("workspace.archiveExporting") : $t("workspace.archivePickExport") }}
-          </button>
+          </UiButton>
         </div>
       </div>
     </div>

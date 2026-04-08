@@ -6,6 +6,7 @@ import GitStatusPathList from "@/components/workspace/GitStatusPathList.vue";
 import { invoke } from "@tauri-apps/api/core";
 import { repoPathArgs } from "@/utils/tauriRepoPath";
 import { computed, ref, watch, toRefs } from "vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 const props = defineProps<{
   path: string | null;
@@ -105,56 +106,66 @@ const displayBranchName = computed(() => {
   <div class="detail">
     <div class="tabs-wrap">
       <div class="tabs" role="tablist">
-        <button
+        <UiButton
           type="button"
           class="tab"
+          size="sm"
+          variant="secondary"
           role="tab"
           :aria-selected="activeTab === 'default'"
           @click="activeTab = 'default'"
         >
           <span class="tab-ico" aria-hidden="true">ℹ️</span>
           {{ $t("workspace.folderDetailTabDefault") }}
-        </button>
-        <button
+        </UiButton>
+        <UiButton
           type="button"
           class="tab"
+          size="sm"
+          variant="secondary"
           role="tab"
           :aria-selected="activeTab === 'branch'"
           @click="activeTab = 'branch'"
         >
           <span class="tab-ico" aria-hidden="true">🌿</span>
           {{ $t("workspace.folderDetailTabBranch") }}
-        </button>
-        <button
+        </UiButton>
+        <UiButton
           type="button"
           class="tab"
+          size="sm"
+          variant="secondary"
           role="tab"
           :aria-selected="activeTab === 'changed'"
           @click="activeTab = 'changed'"
         >
           <span class="tab-ico" aria-hidden="true">📝</span>
           {{ $t("workspace.folderDetailTabChangedAdded") }}
-        </button>
-        <button
+        </UiButton>
+        <UiButton
           type="button"
           class="tab"
+          size="sm"
+          variant="secondary"
           role="tab"
           :aria-selected="activeTab === 'untracked'"
           @click="activeTab = 'untracked'"
         >
           <span class="tab-ico" aria-hidden="true">📌</span>
           {{ $t("workspace.folderDetailTabUntracked") }}
-        </button>
-        <button
+        </UiButton>
+        <UiButton
           type="button"
           class="tab"
+          size="sm"
+          variant="secondary"
           role="tab"
           :aria-selected="activeTab === 'gitignore'"
           @click="activeTab = 'gitignore'"
         >
           <span class="tab-ico" aria-hidden="true">🚫</span>
           {{ $t("workspace.folderDetailTabGitignore") }}
-        </button>
+        </UiButton>
       </div>
     </div>
 

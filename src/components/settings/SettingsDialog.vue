@@ -8,6 +8,7 @@ import SettingsGitSection from "@/components/settings/SettingsGitSection.vue";
 import SettingsLocale from "@/components/settings/SettingsLocale.vue";
 import { getBootstrap } from "@/composables/bootstrap";
 import { useToastStore } from "@/stores/toast";
+import UiButton from "@/components/ui/UiButton.vue";
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ "update:modelValue": [open: boolean] }>();
@@ -151,22 +152,24 @@ onUnmounted(() => {
       <div class="settings-dialog" @click.stop>
         <header class="dialog-head">
           <h2 class="dialog-title">{{ $t("settings.title") }}</h2>
-          <button type="button" class="btn btn-sm btn-secondary" @click="close">
+          <UiButton type="button" size="sm" variant="secondary" @click="close">
             {{ $t("workspace.close") }}
-          </button>
+          </UiButton>
         </header>
 
         <div class="dialog-scroll">
           <div class="tab-buttons">
-            <button
+            <UiButton
               v-for="tab in tabList"
               :key="tab.id"
               type="button"
+              size="sm"
+              variant="secondary"
               :class="{ active: activeTab === tab.id }"
               @click="activeTab = tab.id"
             >
               {{ $t(tab.labelKey) }}
-            </button>
+            </UiButton>
           </div>
 
           <div v-if="activeTab === 'general'" class="general-tab">
@@ -194,7 +197,7 @@ onUnmounted(() => {
         </div>
 
         <footer class="dialog-foot">
-          <button type="button" class="btn btn-primary" @click="save">{{ $t("settings.save") }}</button>
+          <UiButton type="button" variant="primary" @click="save">{{ $t("settings.save") }}</UiButton>
         </footer>
       </div>
     </div>
@@ -278,7 +281,7 @@ onUnmounted(() => {
   max-width: 42rem;
 }
 
-.general-tab :deep(input) {
+.general-tab :deep(.ui-control) {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { Project } from "@/stores/projects";
+import UiButton from "@/components/ui/UiButton.vue";
 
 const props = defineProps<{
   project: Project;
@@ -18,15 +19,17 @@ const folderCount = computed(() => props.project.rootPaths?.length ?? 0);
 
 <template>
   <div class="row">
-    <button
+    <UiButton
       type="button"
+      size="sm"
+      variant="secondary"
       class="drag-handle"
       :title="$t('workspace.projectDragReorder')"
       @pointerdown="emit('reorderPointerDown', $event, project)"
       @click.prevent.stop
     >
       ⠿
-    </button>
+    </UiButton>
     <RouterLink :to="`/projects/${project.id}`" class="item" active-class="active" draggable="false">
       <div class="headline">
         <span class="title" :title="project.name">{{ project.name }}</span>
@@ -36,24 +39,28 @@ const folderCount = computed(() => props.project.rootPaths?.length ?? 0);
             {{ folderCount }}
           </span>
           <div class="actions">
-            <button
+            <UiButton
               type="button"
-              class="btn btn-sm btn-secondary icon-btn"
+              size="sm"
+              variant="secondary"
+              class="icon-btn"
               :title="$t('workspace.projectRename')"
               :aria-label="$t('workspace.projectRename')"
-              @click.stop="emit('rename', project)"
+              @click.prevent.stop="emit('rename', project)"
             >
               <span aria-hidden="true">✏️</span>
-            </button>
-            <button
+            </UiButton>
+            <UiButton
               type="button"
-              class="btn btn-sm btn-danger icon-btn"
+              size="sm"
+              variant="danger"
+              class="icon-btn"
               :title="$t('workspace.projectDelete')"
               :aria-label="$t('workspace.projectDelete')"
-              @click.stop="emit('delete', project)"
+              @click.prevent.stop="emit('delete', project)"
             >
               <span aria-hidden="true">🗑️</span>
-            </button>
+            </UiButton>
           </div>
         </div>
       </div>

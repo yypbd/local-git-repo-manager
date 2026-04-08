@@ -2,6 +2,8 @@
 import { ref, watch, watchEffect } from "vue";
 import { useI18n } from "vue-i18n";
 import { useToastStore } from "@/stores/toast";
+import UiTextarea from "@/components/ui/UiTextarea.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 const props = withDefaults(
   defineProps<{ content: string; hideHeading?: boolean }>(),
@@ -77,7 +79,7 @@ watchEffect((onCleanup) => {
 <template>
   <section class="gitignore-editor">
     <h4 v-if="!hideHeading" class="title">{{ $t("workspace.gitignoreEditorTitle") }}</h4>
-    <textarea
+    <UiTextarea
       v-model="local"
       class="editor"
       rows="14"
@@ -85,12 +87,12 @@ watchEffect((onCleanup) => {
       :placeholder="t('workspace.gitignoreEditorPlaceholder')"
     />
     <div class="actions">
-      <button type="button" class="btn-secondary" @click="copyToClipboard">
+      <UiButton type="button" size="sm" variant="secondary" class="btn-secondary" @click="copyToClipboard">
         {{ $t("workspace.gitignoreCopyButton") }}
-      </button>
-      <button type="button" class="btn-save" @click="requestSave">
+      </UiButton>
+      <UiButton type="button" size="sm" variant="primary" class="btn-save" @click="requestSave">
         {{ $t("workspace.gitignoreSaveButton") }}
-      </button>
+      </UiButton>
     </div>
 
     <div
@@ -102,12 +104,12 @@ watchEffect((onCleanup) => {
         <h4 class="confirm-title">{{ $t("workspace.gitignoreSaveConfirmTitle") }}</h4>
         <p class="confirm-msg">{{ $t("workspace.gitignoreSaveConfirmMessage") }}</p>
         <div class="confirm-actions">
-          <button type="button" class="btn-cancel" @click="showSaveConfirm = false">
+          <UiButton type="button" size="sm" variant="secondary" class="btn-cancel" @click="showSaveConfirm = false">
             {{ $t("workspace.cancel") }}
-          </button>
-          <button type="button" class="btn-confirm" @click="confirmSave">
+          </UiButton>
+          <UiButton type="button" size="sm" variant="primary" class="btn-confirm" @click="confirmSave">
             {{ $t("workspace.gitignoreSaveButton") }}
-          </button>
+          </UiButton>
         </div>
       </div>
     </div>

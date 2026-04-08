@@ -5,6 +5,8 @@ import { useI18n } from "vue-i18n";
 import { useToastStore } from "@/stores/toast";
 import { useDialogEscape } from "@/composables/useDialogShortcuts";
 import { repoPathArgs } from "@/utils/tauriRepoPath";
+import UiInput from "@/components/ui/UiInput.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 type RemoteItem = {
   name: string;
@@ -159,13 +161,15 @@ useDialogEscape(() => emit("close"));
         <div v-else class="content">
           <div class="preset-row">
             <span class="muted">{{ $t("remote.quickPreset") }}</span>
-            <button type="button" @click="addName = 'origin'">origin</button>
-            <button type="button" @click="addName = 'upstream'">upstream</button>
+            <UiButton type="button" size="sm" variant="secondary" @click="addName = 'origin'">origin</UiButton>
+            <UiButton type="button" size="sm" variant="secondary" @click="addName = 'upstream'">upstream</UiButton>
           </div>
           <div class="add-row">
-            <input v-model="addName" :placeholder="$t('remote.namePlaceholder')" />
-            <input v-model="addUrl" :placeholder="$t('remote.urlPlaceholder')" />
-            <button :disabled="loading || !canManage" @click="addRemote">{{ $t("remote.add") }}</button>
+            <UiInput v-model="addName" :placeholder="$t('remote.namePlaceholder')" />
+            <UiInput v-model="addUrl" :placeholder="$t('remote.urlPlaceholder')" />
+            <UiButton type="button" size="sm" variant="primary" :disabled="loading || !canManage" @click="addRemote">
+              {{ $t("remote.add") }}
+            </UiButton>
           </div>
 
           <div v-if="loading" class="muted">{{ $t("remote.loading") }}</div>
@@ -174,31 +178,45 @@ useDialogEscape(() => emit("close"));
             <li v-for="r in items" :key="r.name" class="item">
               <div class="head">
                 <strong>{{ r.name }}</strong>
-                <button @click="removeRemote(r.name)">{{ $t("remote.remove") }}</button>
+                <UiButton type="button" size="sm" variant="danger" @click="removeRemote(r.name)">
+                  {{ $t("remote.remove") }}
+                </UiButton>
               </div>
               <div class="row">
-                <input v-model="renameTo[r.name]" />
-                <button @click="renameRemote(r.name)">{{ $t("remote.rename") }}</button>
+                <UiInput v-model="renameTo[r.name]" />
+                <UiButton type="button" size="sm" variant="secondary" @click="renameRemote(r.name)">
+                  {{ $t("remote.rename") }}
+                </UiButton>
               </div>
               <div class="row">
-                <input v-model="setFetchUrl[r.name]" :placeholder="$t('remote.fetchUrl')" />
+                <UiInput v-model="setFetchUrl[r.name]" :placeholder="$t('remote.fetchUrl')" />
                 <div class="btns">
-                  <button @click="setUrl(r.name, false)">{{ $t("remote.updateFetch") }}</button>
-                  <button type="button" @click="copyText(r.fetchUrl)">{{ $t("remote.copy") }}</button>
+                  <UiButton type="button" size="sm" variant="secondary" @click="setUrl(r.name, false)">
+                    {{ $t("remote.updateFetch") }}
+                  </UiButton>
+                  <UiButton type="button" size="sm" variant="secondary" @click="copyText(r.fetchUrl)">
+                    {{ $t("remote.copy") }}
+                  </UiButton>
                 </div>
               </div>
               <div class="row">
-                <input v-model="setPushUrl[r.name]" :placeholder="$t('remote.pushUrl')" />
+                <UiInput v-model="setPushUrl[r.name]" :placeholder="$t('remote.pushUrl')" />
                 <div class="btns">
-                  <button @click="setUrl(r.name, true)">{{ $t("remote.updatePush") }}</button>
-                  <button type="button" @click="copyText(r.pushUrl)">{{ $t("remote.copy") }}</button>
+                  <UiButton type="button" size="sm" variant="secondary" @click="setUrl(r.name, true)">
+                    {{ $t("remote.updatePush") }}
+                  </UiButton>
+                  <UiButton type="button" size="sm" variant="secondary" @click="copyText(r.pushUrl)">
+                    {{ $t("remote.copy") }}
+                  </UiButton>
                 </div>
               </div>
             </li>
           </ul>
         </div>
         <div class="actions">
-          <button @click="emit('close')">{{ $t("workspace.close") }}</button>
+          <UiButton type="button" size="sm" variant="secondary" @click="emit('close')">
+            {{ $t("workspace.close") }}
+          </UiButton>
         </div>
       </div>
     </div>

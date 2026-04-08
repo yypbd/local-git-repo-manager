@@ -2,11 +2,13 @@
 import { ref, watch } from "vue";
 import type { Project } from "@/stores/projects";
 import { useDialogEscape, useDialogInputFocus } from "@/composables/useDialogShortcuts";
+import UiSelect from "@/components/ui/UiSelect.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 const props = defineProps<{ projects: Project[] }>();
 const emit = defineEmits<{ close: []; submit: [projectId: string] }>();
 const targetId = ref(props.projects[0]?.id ?? "");
-const selectRef = ref<HTMLSelectElement | null>(null);
+const selectRef = ref<{ focus?: () => void } | null>(null);
 
 useDialogInputFocus(selectRef);
 useDialogEscape(() => emit("close"));
@@ -33,12 +35,12 @@ const submit = () => {
     <div class="dialog" @click.stop>
       <h3>다른 프로젝트로 이동</h3>
       <form class="form" @submit.prevent="submit">
-        <select ref="selectRef" v-model="targetId">
+        <UiSelect ref="selectRef" v-model="targetId">
           <option v-for="item in projects" :key="item.id" :value="item.id">{{ item.name }}</option>
-        </select>
+        </UiSelect>
         <div class="actions">
-          <button type="button" class="btn btn-sm btn-secondary" @click="emit('close')">취소</button>
-          <button type="submit" class="btn btn-sm btn-primary">이동</button>
+          <UiButton type="button" size="sm" variant="secondary" @click="emit('close')">취소</UiButton>
+          <UiButton type="submit" size="sm" variant="primary">이동</UiButton>
         </div>
       </form>
     </div>

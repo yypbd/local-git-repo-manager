@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import UiButton from "@/components/ui/UiButton.vue";
+
 defineProps<{ name: string }>();
 const emit = defineEmits<{ close: []; confirm: [] }>();
 </script>
@@ -9,8 +11,8 @@ const emit = defineEmits<{ close: []; confirm: [] }>();
       <h3>프로젝트 삭제</h3>
       <p>"{{ name }}" 프로젝트를 삭제할까요?</p>
       <div class="actions">
-        <button @click="emit('close')">취소</button>
-        <button @click="emit('confirm')">삭제</button>
+        <UiButton type="button" size="sm" variant="secondary" @click="emit('close')">취소</UiButton>
+        <UiButton type="button" size="sm" variant="danger" @click="emit('confirm')">삭제</UiButton>
       </div>
     </div>
   </div>

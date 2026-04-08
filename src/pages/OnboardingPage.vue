@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { invoke } from "@tauri-apps/api/core";
 import { confirmDataRoot, getBootstrap } from "@/composables/bootstrap";
 import { pickDirectory } from "@/composables/pickFolder";
 import { useToastStore } from "@/stores/toast";
+import UiInput from "@/components/ui/UiInput.vue";
+import UiSelect from "@/components/ui/UiSelect.vue";
+import UiButton from "@/components/ui/UiButton.vue";
 
 type AppSettingsPayload = {
   dataRootPath?: string;
@@ -50,6 +53,8 @@ const syncLocalePreview = () => {
     appLocale.value = selectedLocale.value;
   }
 };
+
+watch(selectedLocale, () => syncLocalePreview());
 
 const completeOnboarding = async () => {
   const path = selectedPath.value.trim();
@@ -106,34 +111,33 @@ const pickDataRootPath = async () => {
     <label class="field-block">
       <span class="label">{{ $t("onboarding.selectedCaption") }}</span>
       <div class="path-row">
-        <input
+        <UiInput
           v-model="selectedPath"
-          type="text"
           :placeholder="$t('onboarding.pathPlaceholder')"
           spellcheck="false"
           autocomplete="off"
         />
-        <button type="button" class="btn btn-sm btn-secondary" @click="pickDataRootPath">
+        <UiButton type="button" size="sm" variant="secondary" @click="pickDataRootPath">
           {{ $t("onboarding.pickFolder") }}
-        </button>
+        </UiButton>
       </div>
     </label>
 
     <label class="field-block">
       <span class="label">{{ $t("settings.localeHeading") }}</span>
-      <select v-model="selectedLocale" class="locale-select" @change="syncLocalePreview">
+      <UiSelect v-model="selectedLocale" class="locale-select">
         <option value="ko">{{ $t("settings.localeNameKo") }}</option>
         <option value="en">{{ $t("settings.localeNameEn") }}</option>
-      </select>
+      </UiSelect>
     </label>
 
     <div class="actions">
-      <button type="button" class="btn btn-sm btn-secondary" @click="selectedPath = recommendedPath">
+      <UiButton type="button" size="sm" variant="secondary" @click="selectedPath = recommendedPath">
         {{ $t("onboarding.useRecommended") }}
-      </button>
-      <button type="button" class="btn btn-sm btn-primary" @click="completeOnboarding">
+      </UiButton>
+      <UiButton type="button" size="sm" variant="primary" @click="completeOnboarding">
         {{ $t("onboarding.confirm") }}
-      </button>
+      </UiButton>
     </div>
   </section>
 </template>
@@ -182,19 +186,9 @@ const pickDataRootPath = async () => {
   align-items: stretch;
 }
 
-.path-row input {
+.path-row :deep(.ui-control) {
   flex: 1;
   min-width: 0;
-}
-
-input,
-select.locale-select {
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: #161b29;
-  color: var(--color-text);
-  padding: 8px 10px;
-  font-size: 0.9rem;
 }
 
 .locale-select {
