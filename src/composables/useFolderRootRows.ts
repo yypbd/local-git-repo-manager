@@ -121,26 +121,37 @@ export function sortRootPathsForDisplay(paths: string[]): string[] {
 export function useFolderRootRows(paths: Ref<string[]>) {
   const rows = ref<Record<string, FolderRootRow>>({});
   const loading = ref(false);
+  const loadToken = ref(0);
+  const MAX_CONCURRENCY = 8;
 
   const load = async () => {
+    const token = ++loadToken.value;
     const list = paths.value;
     loading.value = true;
-    const next: Record<string, FolderRootRow> = {};
+    rows.value = {};
     try {
-      const results = await Promise.all(
-        list.map(async (p) => {
-          const row = await loadRow(p);
-          return [p, row] as const;
-        }),
-      );
-      for (const [p, row] of results) {
-        for (const key of pathKeyVariants(p)) {
-          next[key] = row;
+      for (let i = 0; i < list.length; i += MAX_CONCURRENCY) {
+        const chunk = list.slice(i, i + MAX_CONCURRENCY);
+        const results = await Promise.all(
+          chunk.map(async (p) => {
+            const row = await loadRow(p);
+            return [p, row] as const;
+          }),
+        );
+        // 새 로드 요청이 들어오면 오래된 결과를 버린다.
+        if (token !== loadToken.value) return;
+        const next = { ...rows.value };
+        for (const [p, row] of results) {
+          for (const key of pathKeyVariants(p)) {
+            next[key] = row;
+          }
         }
+        rows.value = next;
       }
-      rows.value = next;
     } finally {
-      loading.value = false;
+      if (token === loadToken.value) {
+        loading.value = false;
+      }
     }
   };
 

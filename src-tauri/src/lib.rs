@@ -805,6 +805,29 @@ fn persist_projects(state_path: &PathBuf, projects: &[Project]) -> Result<(), St
     persistence::save_state_atomic(state_path, &persisted)
 }
 
+/// 앱 시작 시 state.json의 root_paths 중 실제로 사라진 경로를 정리한다.
+/// 존재하지 않거나 디렉터리가 아닌 경로는 제거하고, 변경이 있으면 즉시 저장한다.
+fn sanitize_projects_on_boot(
+    state_path: &PathBuf,
+    mut projects: Vec<Project>,
+) -> Result<Vec<Project>, String> {
+    let mut changed = false;
+    for project in &mut projects {
+        let before_len = project.root_paths.len();
+        project.root_paths.retain(|p| {
+            let path = Path::new(p);
+            fs::metadata(path).map(|m| m.is_dir()).unwrap_or(false)
+        });
+        if project.root_paths.len() != before_len {
+            changed = true;
+        }
+    }
+    if changed {
+        persist_projects(state_path, &projects)?;
+    }
+    Ok(projects)
+}
+
 fn default_bootstrap_path() -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
     PathBuf::from(home)
@@ -846,7 +869,11 @@ pub fn run() {
             name: p.name,
             root_paths: p.root_paths,
         })
-        .collect();
+        .collect::<Vec<_>>();
+    let projects = sanitize_projects_on_boot(&state_path, projects).unwrap_or_else(|e| {
+        eprintln!("failed to sanitize projects on boot: {e}");
+        Vec::new()
+    });
 
     let bootstrap = load_bootstrap(&bootstrap_path).unwrap_or_else(|e| {
         eprintln!("failed to load bootstrap: {e}");
