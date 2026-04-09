@@ -13,12 +13,12 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const hasRoots = computed(() => props.project.rootPaths.length > 0);
-const rootCount = computed(() => props.project.rootPaths.length);
+const hasLinkedFolders = computed(() => props.project.rootPaths.length > 0);
+const linkedFolderCount = computed(() => props.project.rootPaths.length);
 
 useDialogEscape(() => emit("close"));
 useDialogEnterConfirm(() => {
-  if (hasRoots.value && props.hasOtherProjects) emit("moveThenDelete");
+  if (hasLinkedFolders.value && props.hasOtherProjects) emit("moveThenDelete");
   else emit("deleteOnly");
 });
 </script>
@@ -28,14 +28,14 @@ useDialogEnterConfirm(() => {
     <div class="dialog">
       <h3>{{ $t("workspace.projectDeleteTitle") }}</h3>
       <p>{{ $t("workspace.projectDeleteMessage", { name: project.name }) }}</p>
-      <p v-if="hasRoots" class="hint">
-        {{ $t("workspace.projectDeleteRootsHint", { n: rootCount }) }}
+      <p v-if="hasLinkedFolders" class="hint">
+        {{ $t("workspace.projectDeleteFoldersHint", { n: linkedFolderCount }) }}
       </p>
       <div class="actions">
         <UiButton type="button" size="sm" variant="secondary" class="btn-muted" @click="emit('close')">
           {{ $t("workspace.cancel") }}
         </UiButton>
-        <template v-if="hasRoots">
+        <template v-if="hasLinkedFolders">
           <UiButton
             type="button"
             size="sm"
@@ -43,7 +43,7 @@ useDialogEnterConfirm(() => {
             :disabled="!props.hasOtherProjects"
             @click="emit('moveThenDelete')"
           >
-            {{ $t("workspace.projectDeleteMoveFirst") }}
+            {{ $t("workspace.projectDeleteMoveFoldersFirst") }}
           </UiButton>
           <UiButton type="button" size="sm" variant="danger" @click="emit('deleteOnly')">
             {{ $t("workspace.projectDeleteUnlinkOnly") }}

@@ -419,7 +419,7 @@ const openMoveProjectModal = () => {
   moveModalOpen.value = true;
 };
 
-const moveRootToProject = async (toProjectId: string) => {
+const moveFolderToProject = async (toProjectId: string) => {
   const path = singleSelectedPath.value;
   if (!props.project || !path) return;
   await invoke("move_root_to_project", {
@@ -555,7 +555,7 @@ watchEffect((onCleanup) => {
             @click="openMoveProjectModal"
           >
             <span aria-hidden="true">📦</span>
-            {{ $t("workspace.moveRootToOtherProject") }}
+            {{ $t("workspace.moveFolderToOtherProject") }}
           </UiButton>
           <UiButton
             type="button"
@@ -624,7 +624,7 @@ watchEffect((onCleanup) => {
                 @select="onRootRowClick"
               />
             </div>
-            <p v-else class="hint">{{ $t("workspace.noRootsYet") }}</p>
+            <p v-else class="hint">{{ $t("workspace.noFoldersYet") }}</p>
           </FolderDropZone>
         </div>
         <div class="folder-detail-pane">
@@ -647,12 +647,12 @@ watchEffect((onCleanup) => {
 
     <div v-if="confirmRemove" class="backdrop modal-backdrop" @click.self="confirmRemove = false">
       <div class="dialog">
-        <h3>{{ $t("workspace.removeRootTitle") }}</h3>
+        <h3>{{ $t("workspace.removeFolderLinkTitle") }}</h3>
         <p class="msg">
           {{
             pathsToRemove.length > 1
-              ? $t("workspace.removeRootsBulkMessage", { count: pathsToRemove.length })
-              : $t("workspace.removeRootMessage")
+              ? $t("workspace.removeFolderLinksBulkMessage", { count: pathsToRemove.length })
+              : $t("workspace.removeFolderLinkMessage")
           }}
         </p>
         <ul v-if="pathsToRemove.length" class="path-list">
@@ -681,7 +681,7 @@ watchEffect((onCleanup) => {
       v-if="moveModalOpen && project"
       :projects="projects.filter((p) => p.id !== project!.id)"
       @close="moveModalOpen = false"
-      @submit="moveRootToProject"
+      @submit="moveFolderToProject"
     />
 
     <div

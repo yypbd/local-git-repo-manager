@@ -147,7 +147,7 @@ function closeDeleteFlow() {
 function onDeleteMoveFirst() {
   const others = projects.value.filter((p) => p.id !== deleting.value?.id);
   if (others.length === 0) {
-    pushToast(t("workspace.projectDeleteNoOtherProject"), "error");
+    pushToast(t("workspace.projectDeleteNoProjectForFolderMove"), "error");
     return;
   }
   deleteStep.value = "pick";
@@ -177,7 +177,7 @@ async function onMoveAllRootsThenDelete(toProjectId: string) {
     deleting.value = null;
     await deleteProject(p.id);
   } catch (err) {
-    pushToast(t("workspace.projectDeleteMoveFailed", { detail: dropDetail(err) }), "error");
+    pushToast(t("workspace.projectDeleteFolderMoveFailed", { detail: dropDetail(err) }), "error");
   }
 }
 

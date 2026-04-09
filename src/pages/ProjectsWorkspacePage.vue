@@ -33,7 +33,7 @@ const {
 const selectedFolderPath = ref<string | null>(null);
 const selectedFolderPaths = ref<string[]>([]);
 
-const addRoots = async (paths: string[]) => {
+const addFolders = async (paths: string[]) => {
   if (!project.value || paths.length === 0) return;
   const id = project.value.id;
   const unique = [...new Set(paths.map((p) => p.trim()).filter(Boolean))];
@@ -49,9 +49,9 @@ const addRoots = async (paths: string[]) => {
   }
   await syncFromBackend();
   if (fail > 0 && ok === 0) {
-    toast(t("workspace.addRootsAllFailed"), "error");
+    toast(t("workspace.addFoldersAllFailed"), "error");
   } else if (fail > 0) {
-    toast(t("workspace.addRootsSomeFailed", { fail, ok }), "warning");
+    toast(t("workspace.addFoldersSomeFailed", { fail, ok }), "warning");
   }
 };
 
@@ -97,7 +97,7 @@ watch(
         :folder-rows-loaded="folderRowsLoaded"
         :folder-rows-total="folderRowsTotal"
         :reload="reloadFolderRows"
-        @dropped="addRoots"
+        @dropped="addFolders"
       />
     </template>
     <template #detail>

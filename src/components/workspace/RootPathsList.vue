@@ -86,11 +86,11 @@ function onFolderPointerDown(e: PointerEvent, path: string) {
     {
       afterMove: async (toId) => {
         await syncFromBackend();
-        toast(t("workspace.moveRootDropDone"), "success");
+        toast(t("workspace.moveFolderDropDone"), "success");
         void router.push(`/projects/${toId}`);
       },
       onError: (err) => {
-        toast(t("workspace.projectDeleteMoveFailed", { detail: dropDetail(err) }), "error");
+        toast(t("workspace.projectDeleteFolderMoveFailed", { detail: dropDetail(err) }), "error");
       },
     },
   );
