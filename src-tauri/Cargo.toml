@@ -1,6 +1,6 @@
 [package]
 name = "local-git-repo-manager"
-version = "0.1.0"
+version = "1.0.1"
 description = "Local Git Repo Manager"
 authors = ["you"]
 edition = "2021"
