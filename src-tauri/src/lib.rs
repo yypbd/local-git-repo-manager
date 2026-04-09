@@ -699,6 +699,11 @@ fn reveal_path(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn open_remote_in_browser(remote: String) -> Result<(), String> {
+    shell::open_remote_in_browser(&remote)
+}
+
+#[tauri::command]
 fn open_external(
     path: String,
     command: Option<String>,
@@ -935,6 +940,7 @@ pub fn run() {
             update_settings,
             git_probe_version,
             reveal_path,
+            open_remote_in_browser,
             open_external,
             git_init,
             git_remove_dot_git,

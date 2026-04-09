@@ -17,6 +17,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   copyPath: [];
   copyRemote: [];
+  openRemoteInBrowser: [];
   revealPath: [];
   openExternal: [];
 }>();
@@ -250,6 +251,16 @@ const displayBranchName = computed(() => {
                 >
                   <span aria-hidden="true">🔗</span>
                   {{ $t("workspace.copyUrlMenu") }}
+                </UiButton>
+                <UiButton
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  :disabled="!row?.remote || !!row?.gitError"
+                  @click="emit('openRemoteInBrowser')"
+                >
+                  <span aria-hidden="true">🌐</span>
+                  {{ $t("workspace.openRemoteInBrowser") }}
                 </UiButton>
               </div>
             </dd>

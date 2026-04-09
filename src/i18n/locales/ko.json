@@ -126,6 +126,8 @@
   "workspace.copyRemote": "Remote 복사",
   "workspace.copyRemoteSuccess": "원격 URL을 복사했습니다.",
   "workspace.copyRemoteUnavailable": "복사할 원격 URL이 없습니다.",
+  "workspace.openRemoteInBrowser": "브라우저에서 열기",
+  "workspace.openRemoteInBrowserFailed": "브라우저에서 열 수 없습니다: {detail}",
   "workspace.clipboardCopyFailed": "클립보드에 복사하지 못했습니다.",
   "workspace.copyDone": "복사했습니다.",
   "workspace.copyLocalUrl": "로컬 URL 복사",

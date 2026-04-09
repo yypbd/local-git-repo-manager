@@ -126,6 +126,8 @@
   "workspace.copyRemote": "Copy remote URL",
   "workspace.copyRemoteSuccess": "Remote URL copied.",
   "workspace.copyRemoteUnavailable": "No remote URL to copy.",
+  "workspace.openRemoteInBrowser": "Open in browser",
+  "workspace.openRemoteInBrowserFailed": "Could not open in browser: {detail}",
   "workspace.clipboardCopyFailed": "Could not copy to the clipboard.",
   "workspace.copyDone": "Copied.",
   "workspace.copyLocalUrl": "Copy local URL",

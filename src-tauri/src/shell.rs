@@ -81,3 +81,48 @@ pub fn open_path(path: &str) -> Result<(), String> {
         .map_err(|e| format!("failed to open path in shell: {e}"))?;
     Ok(())
 }
+
+/// Git 원격 URL을 시스템 기본 브라우저로 열 수 있는 HTTP(S) 주소로 바꿉니다.
+/// — `https://` / `http://` 그대로  
+/// — `git@github.com:org/repo.git` 등 SSH 형식은 호스트별로 웹 URL로 변환
+pub fn remote_to_browser_url(remote: &str) -> Option<String> {
+    let u = remote.trim();
+    if u.is_empty() {
+        return None;
+    }
+    if u.starts_with("https://") || u.starts_with("http://") {
+        return Some(u.to_string());
+    }
+    if let Some(rest) = u.strip_prefix("git@") {
+        if let Some((host, path)) = rest.split_once(':') {
+            let path = path.trim_end_matches(".git");
+            return match host {
+                "github.com" => Some(format!("https://github.com/{path}")),
+                "gitlab.com" => Some(format!("https://gitlab.com/{path}")),
+                "bitbucket.org" => Some(format!("https://bitbucket.org/{path}")),
+                _ => None,
+            };
+        }
+    }
+    if let Some(rest) = u.strip_prefix("ssh://git@github.com/") {
+        let path = rest.trim_end_matches(".git");
+        return Some(format!("https://github.com/{path}"));
+    }
+    if let Some(rest) = u.strip_prefix("ssh://git@gitlab.com/") {
+        let path = rest.trim_end_matches(".git");
+        return Some(format!("https://gitlab.com/{path}"));
+    }
+    if let Some(rest) = u.strip_prefix("ssh://git@bitbucket.org/") {
+        let path = rest.trim_end_matches(".git");
+        return Some(format!("https://bitbucket.org/{path}"));
+    }
+    None
+}
+
+pub fn open_remote_in_browser(remote: &str) -> Result<(), String> {
+    let url = remote_to_browser_url(remote).ok_or_else(|| {
+        "cannot open this remote in a browser (use https:// or git@github.com / git@gitlab.com / git@bitbucket.org)"
+            .to_string()
+    })?;
+    open_path(&url)
+}

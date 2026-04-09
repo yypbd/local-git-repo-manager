@@ -253,6 +253,21 @@ const copyRemote = async () => {
   }
 };
 
+const openRemoteInBrowser = async () => {
+  const row = selectedRow.value;
+  const remote = row?.remote?.trim();
+  if (!remote || row?.gitError) {
+    toast(t("workspace.copyRemoteUnavailable"), "error");
+    return;
+  }
+  try {
+    await invoke("open_remote_in_browser", { remote });
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : String(e);
+    toast(t("workspace.openRemoteInBrowserFailed", { detail }), "error");
+  }
+};
+
 const revealPath = async () => {
   const p = singleSelectedPath.value;
   if (!p) {
@@ -622,6 +637,7 @@ watchEffect((onCleanup) => {
             :reveal-label-key="revealLabelKey"
             @copy-path="copyPathInvoke"
             @copy-remote="copyRemote"
+            @open-remote-in-browser="openRemoteInBrowser"
             @reveal-path="revealPath"
             @open-external="openExternal"
           />
