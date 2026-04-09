@@ -21,8 +21,13 @@ const projectId = computed(() => (typeof route.params.id === "string" ? route.pa
 const project = computed(() => projects.value.find((p) => p.id === projectId.value));
 
 const rootPathsRef = computed(() => project.value?.rootPaths ?? []);
-const { rows: folderRows, loading: folderRowsLoading, reload: reloadFolderRows } =
-  useFolderRootRows(rootPathsRef);
+const {
+  rows: folderRows,
+  loading: folderRowsLoading,
+  loadedCount: folderRowsLoaded,
+  totalCount: folderRowsTotal,
+  reload: reloadFolderRows,
+} = useFolderRootRows(rootPathsRef);
 
 /** 폴더 목록: 포커스(상세·마지막 클릭) + Ctrl/Shift 멀티 선택 */
 const selectedFolderPath = ref<string | null>(null);
@@ -89,6 +94,8 @@ watch(
         :project="project"
         :rows="folderRows"
         :loading="folderRowsLoading"
+        :folder-rows-loaded="folderRowsLoaded"
+        :folder-rows-total="folderRowsTotal"
         :reload="reloadFolderRows"
         @dropped="addRoots"
       />

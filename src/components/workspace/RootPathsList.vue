@@ -59,6 +59,11 @@ const rowByPath = computed(() => {
   return map;
 });
 
+/** 전역 로딩 중이어도, 이미 `folder_root_row`가 온 행은 원격·브랜치·상태를 바로 표시 */
+function rowMetaPending(path: string): boolean {
+  return props.loading && rowByPath.value[path] === undefined;
+}
+
 function isRowSelected(path: string): boolean {
   return props.selectedPaths.length > 0
     ? props.selectedPaths.includes(path)
@@ -138,7 +143,7 @@ function onRowClick(path: string, e: MouseEvent) {
         <span class="name">{{ folderNameFromPath(path) }}</span>
         <div class="paths-grid">
           <code class="cell local">{{ path }}</code>
-          <code v-if="loading" class="cell remote muted">…</code>
+          <code v-if="rowMetaPending(path)" class="cell remote muted">…</code>
           <span v-else-if="rowByPath[path]?.gitError" class="cell remote muted">{{ $t("workspace.remoteNotGit") }}</span>
           <span v-else-if="rowByPath[path]?.remote" class="cell remote">
             <code>{{ rowByPath[path]!.remote }}</code>
@@ -152,10 +157,12 @@ function onRowClick(path: string, e: MouseEvent) {
           <span v-else class="cell remote muted">{{ $t("workspace.remoteNoOrigin") }}</span>
         </div>
         <div class="tail">
-          <span class="branch">{{ loading ? "…" : (rowByPath[path]?.branch ?? "—") }}</span>
+          <span class="branch">{{
+            rowMetaPending(path) ? "…" : (rowByPath[path]?.branch ?? "—")
+          }}</span>
           <span class="dash" aria-hidden="true">-</span>
           <span class="status">
-            <template v-if="loading">…</template>
+            <template v-if="rowMetaPending(path)">…</template>
             <template v-else-if="!rowByPath[path]">—</template>
             <template v-else-if="rowByPath[path]!.gitError">
               <span class="status-tag status-tag--non-git">{{ $t("workspace.notGitRepo") }}</span>
@@ -176,7 +183,7 @@ function onRowClick(path: string, e: MouseEvent) {
         <div class="folder-emoji" aria-hidden="true">📁</div>
         <span class="name name--icon">{{ folderNameFromPath(path) }}</span>
         <code class="path-mini">{{ path }}</code>
-        <span v-if="loading" class="mini muted">…</span>
+        <span v-if="rowMetaPending(path)" class="mini muted">…</span>
         <span v-else-if="rowByPath[path]?.gitError" class="mini muted">{{ $t("workspace.notGitRepo") }}</span>
         <span v-else-if="rowByPath[path]?.clean" class="mini">{{ $t("workspace.statusClean") }}</span>
         <span v-else class="mini dirty">

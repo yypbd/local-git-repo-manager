@@ -22,6 +22,9 @@ const emit = defineEmits<{
 }>();
 const { path, row, loading } = toRefs(props);
 
+/** 선택 경로의 `folder_root_row`가 아직 없을 때만 — 전체 목록 로딩 중이어도 이미 도착한 행은 표시 */
+const folderMetaPending = computed(() => loading.value && !row.value);
+
 type GitStatusFilesPayload = {
   branch: string;
   upstream: string | null;
@@ -225,7 +228,7 @@ const displayBranchName = computed(() => {
           <div class="field">
             <dt>{{ $t("workspace.remotePath") }}</dt>
             <dd>
-              <template v-if="loading">…</template>
+              <template v-if="folderMetaPending">…</template>
               <span v-else-if="row?.gitError" class="muted">{{ $t("workspace.remoteNotGit") }}</span>
               <span v-else-if="row?.remote">
                 <code class="mono">{{ row.remote }}</code>
@@ -254,7 +257,7 @@ const displayBranchName = computed(() => {
           <div class="field">
             <dt>{{ $t("workspace.statusLabel") }}</dt>
             <dd>
-              <template v-if="loading">…</template>
+              <template v-if="folderMetaPending">…</template>
               <template v-else-if="!row">—</template>
               <template v-else-if="row.gitError">{{ $t("workspace.notGitRepo") }}</template>
               <template v-else-if="row.clean">{{ $t("workspace.statusClean") }}</template>
@@ -277,7 +280,7 @@ const displayBranchName = computed(() => {
     >
       <div v-if="!path" class="empty">{{ $t("workspace.folderSelectHint") }}</div>
       <template v-else>
-        <div v-if="loading" class="files-empty">…</div>
+        <div v-if="folderMetaPending" class="files-empty">…</div>
         <p v-else-if="row?.gitError" class="empty muted">{{ $t("workspace.notGitRepo") }}</p>
         <dl v-else-if="row" class="fields branch-fields">
           <div class="field">
@@ -308,7 +311,7 @@ const displayBranchName = computed(() => {
       <template v-else>
         <GitStatusPathList
           :paths="changedOrAddedFiles"
-          :pending="loading || filesLoading"
+          :pending="filesLoading"
           :empty-text="$t('workspace.changedAddedListEmpty')"
         />
       </template>
@@ -323,7 +326,7 @@ const displayBranchName = computed(() => {
       <template v-else>
         <GitStatusPathList
           :paths="untrackedFiles"
-          :pending="loading || filesLoading"
+          :pending="filesLoading"
           :empty-text="$t('workspace.untrackedListEmpty')"
         />
       </template>

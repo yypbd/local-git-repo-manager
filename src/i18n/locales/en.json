@@ -65,6 +65,7 @@
   "workspace.addRootsAllFailed": "Could not add folders. Path may already belong to another project.",
   "workspace.addRootsSomeFailed": "Added {ok}, failed {fail} (e.g. path in another project).",
   "workspace.refreshFolderInfo": "Refresh folder info",
+  "workspace.folderRowsLoadProgress": "Loading {loaded} / {total}",
   "workspace.deleteSelected": "Delete selected",
   "workspace.filterLabel": "Filter",
   "workspace.viewModeLabel": "View",

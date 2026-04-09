@@ -19,12 +19,21 @@ import { useToastStore } from "@/stores/toast";
 import type { Project } from "@/stores/projects";
 import { repoPathArgs } from "@/utils/tauriRepoPath";
 
-const props = defineProps<{
-  project: Project | undefined;
-  rows: Record<string, FolderRootRow>;
-  loading: boolean;
-  reload: () => void | Promise<void>;
-}>();
+const props = withDefaults(
+  defineProps<{
+    project: Project | undefined;
+    rows: Record<string, FolderRootRow>;
+    loading: boolean;
+    /** `useFolderRootRows` 진행률(이번 로드에서 처리한 폴더 수 / 전체) */
+    folderRowsLoaded?: number;
+    folderRowsTotal?: number;
+    reload: () => void | Promise<void>;
+  }>(),
+  {
+    folderRowsLoaded: 0,
+    folderRowsTotal: 0,
+  },
+);
 
 const emit = defineEmits<{
   dropped: [paths: string[]];
@@ -467,6 +476,41 @@ watchEffect((onCleanup) => {
       <h2 class="title">{{ $t("workspace.foldersPanel") }}</h2>
     </header>
 
+    <div
+      v-if="project && loading && folderRowsTotal > 0"
+      class="folder-load-banner"
+      role="status"
+      :aria-busy="true"
+      :aria-label="
+        $t('workspace.folderRowsLoadProgress', {
+          loaded: folderRowsLoaded,
+          total: folderRowsTotal,
+        })
+      "
+    >
+      <div
+        class="folder-load-banner__track"
+        :class="{ 'folder-load-banner__track--indeterminate': folderRowsLoaded === 0 }"
+      >
+        <div
+          class="folder-load-banner__bar"
+          :style="
+            folderRowsLoaded === 0
+              ? undefined
+              : {
+                  width: `${Math.min(100, (folderRowsLoaded / folderRowsTotal) * 100)}%`,
+                }
+          "
+        />
+      </div>
+      <span class="folder-load-banner__text">{{
+        $t("workspace.folderRowsLoadProgress", {
+          loaded: folderRowsLoaded,
+          total: folderRowsTotal,
+        })
+      }}</span>
+    </div>
+
     <div v-if="!project" class="empty">
       {{ $t("workspace.selectProjectHint") }}
     </div>
@@ -667,6 +711,66 @@ watchEffect((onCleanup) => {
   margin: 0;
   font-size: 0.88rem;
   font-weight: 600;
+}
+
+.folder-load-banner {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgb(59 130 246 / 35%);
+  background: rgb(15 23 42 / 95%);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 20%);
+}
+
+.folder-load-banner__track {
+  flex: 1;
+  min-width: 120px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgb(55 65 81 / 85%);
+  overflow: hidden;
+  position: relative;
+}
+
+.folder-load-banner__track--indeterminate .folder-load-banner__bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 38%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #3b82f6);
+  animation: folder-load-indeterminate 1.05s ease-in-out infinite;
+}
+
+@keyframes folder-load-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+.folder-load-banner__bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #3b82f6);
+  transition: width 0.12s ease-out;
+  min-width: 4px;
+}
+
+.folder-load-banner__text {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.95;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .empty {
