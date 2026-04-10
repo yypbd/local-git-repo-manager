@@ -8,6 +8,10 @@ import FolderDropZone from "@/components/FolderDropZone.vue";
 import FolderSelectionDetail from "@/components/workspace/FolderSelectionDetail.vue";
 import RootPathsList from "@/components/workspace/RootPathsList.vue";
 import MoveRootToProjectModal from "@/components/tree/MoveRootToProjectModal.vue";
+import RemoteManagerDialog from "@/components/git/RemoteManagerDialog.vue";
+import ArchiveDialog from "@/components/git/ArchiveDialog.vue";
+import GitignoreEditor from "@/components/git/GitignoreEditor.vue";
+import TemplatePicker from "@/components/git/TemplatePicker.vue";
 import Select from "@/components/ui/Select.vue";
 import Button from "@/components/ui/Button.vue";
 import AlertDialogContent from "@/components/ui/AlertDialogContent.vue";
@@ -23,8 +27,8 @@ import DialogTitle from "@/components/ui/DialogTitle.vue";
 import DialogFooter from "@/components/ui/DialogFooter.vue";
 import { pickDirectories } from "@/composables/pickFolder";
 import {
+  folderNameFromPath,
   lookupFolderRow,
-  sortRootPathsForDisplay,
   type FolderRootRow,
 } from "@/composables/useFolderRootRows";
 import { useProjectsStore } from "@/stores/projects";
@@ -98,6 +102,23 @@ try {
   }
 } catch {}
 
+type FolderSortMode = "name" | "path" | "status";
+type FolderSortDir = "asc" | "desc";
+const FOLDER_SORT_MODE_KEY = "workspace.folderSortMode";
+const FOLDER_SORT_DIR_KEY = "workspace.folderSortDir";
+const sortMode = ref<FolderSortMode>("name");
+const sortDir = ref<FolderSortDir>("asc");
+
+try {
+  const sm = localStorage.getItem(FOLDER_SORT_MODE_KEY);
+  if (sm === "name" || sm === "path" || sm === "status") sortMode.value = sm;
+  const sd = localStorage.getItem(FOLDER_SORT_DIR_KEY);
+  if (sd === "asc" || sd === "desc") sortDir.value = sd;
+} catch {}
+
+watch(sortMode, (v) => { try { localStorage.setItem(FOLDER_SORT_MODE_KEY, v); } catch {} });
+watch(sortDir, (v) => { try { localStorage.setItem(FOLDER_SORT_DIR_KEY, v); } catch {} });
+
 const filteredRootPaths = computed(() => {
   const all = props.project?.rootPaths ?? [];
   if (filterMode.value === "all") return all;
@@ -110,6 +131,39 @@ const filteredRootPaths = computed(() => {
     if (filterMode.value === "non_git") return row.gitError;
     return true;
   });
+});
+
+const sortedFilteredPaths = computed(() => {
+  const paths = [...filteredRootPaths.value];
+  const mode = sortMode.value;
+  const dir = sortDir.value;
+  paths.sort((a, b) => {
+    let cmp = 0;
+    if (mode === "name") {
+      const na = folderNameFromPath(a);
+      const nb = folderNameFromPath(b);
+      cmp = na.localeCompare(nb, undefined, { sensitivity: "base", numeric: true });
+      if (cmp === 0) cmp = a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
+    } else if (mode === "path") {
+      cmp = a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
+    } else {
+      // status: clean(0) < dirty(1) < non-git(2)
+      const statusRank = (p: string) => {
+        const row = lookupFolderRow(props.rows, p);
+        if (!row || row.gitError) return 2;
+        if (!row.clean) return 1;
+        return 0;
+      };
+      cmp = statusRank(a) - statusRank(b);
+      if (cmp === 0) {
+        const na = folderNameFromPath(a);
+        const nb = folderNameFromPath(b);
+        cmp = na.localeCompare(nb, undefined, { sensitivity: "base", numeric: true });
+      }
+    }
+    return dir === "asc" ? cmp : -cmp;
+  });
+  return paths;
 });
 
 watch(filteredRootPaths, (visiblePaths) => {
@@ -148,7 +202,7 @@ watch(
 
 function onRootRowClick(path: string, e: MouseEvent) {
   if (!props.project) return;
-  const sorted = sortRootPathsForDisplay(props.project.rootPaths);
+  const sorted = sortedFilteredPaths.value;
   const ctrl = e.ctrlKey || e.metaKey;
   const shift = e.shiftKey;
 
@@ -447,6 +501,54 @@ const moveFolderToProject = async (toProjectId: string) => {
   await syncFromBackend();
 };
 
+// ── Remote / Archive / Gitignore 다이얼로그 ──────────────────────────────
+const showRemote = ref(false);
+const showArchive = ref(false);
+const showGitignoreModal = ref(false);
+const gitignoreModalContent = ref("");
+const gitignoreTemplates = ref<Array<{ name: string; content: string }>>([]);
+const templateSyncing = ref(false);
+
+const openGitignoreModal = async () => {
+  const p = singleSelectedPath.value;
+  if (!p) { toast(t("workspace.actionNeedsFolder"), "error"); return; }
+  try {
+    const gi = await invoke<{ exists: boolean; content: string }>("read_gitignore", repoPathArgs(p));
+    gitignoreModalContent.value = gi.content ?? "";
+    gitignoreTemplates.value = await invoke("template_list");
+    showGitignoreModal.value = true;
+  } catch (e) {
+    toast(e instanceof Error ? e.message : String(e), "error");
+  }
+};
+
+const saveGitignoreModal = async (content: string) => {
+  const p = singleSelectedPath.value;
+  if (!p) return;
+  try {
+    await invoke("write_gitignore", { ...repoPathArgs(p), content });
+    gitignoreModalContent.value = content;
+    toast(t("workspace.gitignoreSaveSuccess"), "success");
+    showGitignoreModal.value = false;
+    await props.reload();
+  } catch (e) {
+    toast(e instanceof Error ? e.message : String(e), "error");
+  }
+};
+
+const syncTemplateInModal = async () => {
+  templateSyncing.value = true;
+  try {
+    const r = await invoke<{ count: number }>("template_sync");
+    gitignoreTemplates.value = await invoke("template_list");
+    toast(t("workspace.templateSyncSuccess", { count: r.count }), "success");
+  } catch (e) {
+    toast(e instanceof Error ? e.message : String(e), "error");
+  } finally {
+    templateSyncing.value = false;
+  }
+};
+
 </script>
 
 <template>
@@ -497,6 +599,7 @@ const moveFolderToProject = async (toProjectId: string) => {
     <template v-else>
       <div class="folder-toolbar">
         <div class="toolbar-actions">
+          <!-- 그룹 1: 목록 전체 -->
           <Button type="button" size="sm" variant="default" @click="addFolder">
             <span aria-hidden="true">➕</span>
             {{ $t("workspace.addFolder") }}
@@ -511,16 +614,10 @@ const moveFolderToProject = async (toProjectId: string) => {
             <span aria-hidden="true">🔄</span>
             {{ $t("workspace.refreshFolderInfo") }}
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            :disabled="!singleSelectedPath || loading || !hasOtherProjects"
-            @click="openMoveProjectModal"
-          >
-            <span aria-hidden="true">📦</span>
-            {{ $t("workspace.moveFolderToOtherProject") }}
-          </Button>
+
+          <div class="toolbar-divider" aria-hidden="true" />
+
+          <!-- 그룹 2: 멀티 선택 가능 -->
           <Button
             type="button"
             size="sm"
@@ -531,45 +628,41 @@ const moveFolderToProject = async (toProjectId: string) => {
             <span aria-hidden="true">🗑️</span>
             {{ $t("workspace.deleteSelected") }}
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="success"
-            :disabled="!canGitInit"
-            @click="runGitInit"
-          >
-            <span aria-hidden="true">🌱</span>
-            {{ $t("workspace.gitInit") }}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            :disabled="!canGitRemoveRepo"
-            @click="openGitRemoveConfirm"
-          >
-            <span aria-hidden="true">⚠️</span>
-            {{ $t("workspace.gitRemoveRepo") }}
-          </Button>
         </div>
-        <div class="toolbar-filter">
-          <label class="filter-label" for="folder-view-mode">{{ $t("workspace.viewModeLabel") }}</label>
-          <Select id="folder-view-mode" v-model="folderViewMode" class="filter-select" size="sm">
-            <option value="list">{{ $t("workspace.viewModeList") }}</option>
-            <option value="icon">{{ $t("workspace.viewModeIcon") }}</option>
-          </Select>
-          <label class="filter-label" for="folder-filter">{{ $t("workspace.filterLabel") }}</label>
-          <Select id="folder-filter" v-model="filterMode" class="filter-select" size="sm">
-            <option value="all">{{ $t("workspace.filterAll") }}</option>
-            <option value="remote">{{ $t("workspace.filterRemoteConnected") }}</option>
-            <option value="git">{{ $t("workspace.filterGitRepo") }}</option>
-            <option value="non_git">{{ $t("workspace.filterNotGitRepo") }}</option>
-          </Select>
-          <div class="status-legend" :aria-label="$t('workspace.statusLabel')">
-            <span class="legend-badge legend-badge--clean">{{ $t("workspace.statusClean") }}</span>
-            <span class="legend-badge legend-badge--dirty">M/U</span>
-            <span class="legend-badge legend-badge--non-git">{{ $t("workspace.notGitRepo") }}</span>
-          </div>
+      </div>
+
+      <!-- 필터 행: 툴바와 목록 사이 전용 행 -->
+      <div class="folder-filter-bar">
+        <label class="filter-label" for="folder-view-mode">{{ $t("workspace.viewModeLabel") }}</label>
+        <Select id="folder-view-mode" v-model="folderViewMode" class="filter-select" size="sm">
+          <option value="list">{{ $t("workspace.viewModeList") }}</option>
+          <option value="icon">{{ $t("workspace.viewModeIcon") }}</option>
+        </Select>
+        <label class="filter-label" for="folder-filter">{{ $t("workspace.filterLabel") }}</label>
+        <Select id="folder-filter" v-model="filterMode" class="filter-select" size="sm">
+          <option value="all">{{ $t("workspace.filterAll") }}</option>
+          <option value="remote">{{ $t("workspace.filterRemoteConnected") }}</option>
+          <option value="git">{{ $t("workspace.filterGitRepo") }}</option>
+          <option value="non_git">{{ $t("workspace.filterNotGitRepo") }}</option>
+        </Select>
+        <label class="filter-label" for="folder-sort">{{ $t("workspace.sortLabel") }}</label>
+        <Select id="folder-sort" v-model="sortMode" class="filter-select" size="sm">
+          <option value="name">{{ $t("workspace.sortByName") }}</option>
+          <option value="path">{{ $t("workspace.sortByPath") }}</option>
+          <option value="status">{{ $t("workspace.sortByStatus") }}</option>
+        </Select>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          class="sort-dir-btn"
+          :aria-label="sortDir === 'asc' ? '오름차순' : '내림차순'"
+          @click="sortDir = sortDir === 'asc' ? 'desc' : 'asc'"
+        >{{ sortDir === "asc" ? "↑" : "↓" }}</Button>
+        <div class="status-legend" :aria-label="$t('workspace.statusLabel')">
+          <span class="legend-badge legend-badge--clean">{{ $t("workspace.statusClean") }}</span>
+          <span class="legend-badge legend-badge--dirty">M/U</span>
+          <span class="legend-badge legend-badge--non-git">{{ $t("workspace.notGitRepo") }}</span>
         </div>
       </div>
 
@@ -578,7 +671,7 @@ const moveFolderToProject = async (toProjectId: string) => {
           <FolderDropZone class="folder-drop-wrap" @dropped="emit('dropped', $event)">
             <div v-if="project.rootPaths.length" class="list-block">
               <RootPathsList
-                :paths="filteredRootPaths"
+                :paths="sortedFilteredPaths"
                 :rows="rows"
                 :loading="loading"
                 :view-mode="folderViewMode"
@@ -591,7 +684,7 @@ const moveFolderToProject = async (toProjectId: string) => {
             <p v-else class="hint">{{ $t("workspace.noFoldersYet") }}</p>
           </FolderDropZone>
         </div>
-        <div class="folder-detail-pane">
+        <div v-if="selectedFolderPath" class="folder-detail-pane">
           <FolderSelectionDetail
             class="selection-detail"
             :path="selectedFolderPath"
@@ -599,11 +692,20 @@ const moveFolderToProject = async (toProjectId: string) => {
             :loading="loading"
             :can-path-actions="canPathActions"
             :reveal-label-key="revealLabelKey"
+            :can-move="Boolean(singleSelectedPath && !loading && hasOtherProjects)"
+            :can-git-init="canGitInit"
+            :can-git-remove-repo="canGitRemoveRepo"
             @copy-path="copyPathInvoke"
             @copy-remote="copyRemote"
             @open-remote-in-browser="openRemoteInBrowser"
             @reveal-path="revealPath"
             @open-external="openExternal"
+            @open-move-modal="openMoveProjectModal"
+            @git-init="() => void runGitInit()"
+            @git-remove="openGitRemoveConfirm"
+            @open-remote-manager="showRemote = true"
+            @open-archive="showArchive = true"
+            @open-gitignore="() => void openGitignoreModal()"
           />
         </div>
       </div>
@@ -655,6 +757,45 @@ const moveFolderToProject = async (toProjectId: string) => {
       @close="moveModalOpen = false"
       @submit="moveFolderToProject"
     />
+
+    <!-- Remote 관리 Dialog -->
+    <RemoteManagerDialog
+      v-if="showRemote"
+      :repo-path="singleSelectedPath"
+      @updated="() => void props.reload()"
+      @close="showRemote = false"
+    />
+
+    <!-- 아카이브 Dialog -->
+    <ArchiveDialog
+      v-if="showArchive"
+      :repo-path="singleSelectedPath"
+      @close="showArchive = false"
+    />
+
+    <!-- Gitignore 편집 Dialog -->
+    <DialogRoot :open="showGitignoreModal" @update:open="(v) => { if (!v) showGitignoreModal = false }">
+      <DialogContent class="w-[min(720px,96vw)] max-h-[min(90vh,720px)] max-w-none flex flex-col">
+        <DialogHeader>
+          <DialogTitle>{{ $t("workspace.editGitignore") }}</DialogTitle>
+        </DialogHeader>
+        <div class="min-h-0 flex-1 overflow-auto px-4 py-3 grid gap-3">
+          <TemplatePicker
+            compact
+            :items="gitignoreTemplates"
+            :syncing="templateSyncing"
+            @apply="(c) => { gitignoreModalContent = c }"
+            @sync="() => void syncTemplateInModal()"
+          />
+          <GitignoreEditor
+            hide-heading
+            :content="gitignoreModalContent"
+            @save="saveGitignoreModal"
+            @cancel="showGitignoreModal = false"
+          />
+        </div>
+      </DialogContent>
+    </DialogRoot>
 
     <!-- 외부 도구 선택 Dialog -->
     <DialogRoot :open="showExternalPicker" @update:open="(v) => { if (!v) showExternalPicker = false }">
@@ -770,10 +911,19 @@ const moveFolderToProject = async (toProjectId: string) => {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: 4px;
-  padding: 2px 0 4px;
+  padding: 2px 0 6px;
+}
+
+.folder-filter-bar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 4px 0;
+  border-top: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 4px;
 }
@@ -785,11 +935,12 @@ const moveFolderToProject = async (toProjectId: string) => {
   gap: 4px;
 }
 
-.toolbar-filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0 2px;
 }
 
 .filter-label {
@@ -807,6 +958,14 @@ const moveFolderToProject = async (toProjectId: string) => {
   border: 1px solid var(--border);
   background: var(--background);
   color: inherit;
+}
+
+.sort-dir-btn {
+  height: 24px;
+  min-width: 28px;
+  padding: 0 6px;
+  font-size: 0.8rem;
+  flex-shrink: 0;
 }
 
 .status-legend {

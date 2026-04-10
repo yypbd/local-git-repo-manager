@@ -12,7 +12,6 @@ import {
 import {
   folderNameFromPath,
   lookupFolderRow,
-  sortRootPathsForDisplay,
 } from "@/composables/useFolderRootRows";
 import { useProjectsStore } from "@/stores/projects";
 import { useToastStore } from "@/stores/toast";
@@ -48,12 +47,10 @@ const emit = defineEmits<{
   select: [path: string, event: MouseEvent];
 }>();
 
-const sortedPaths = computed(() => sortRootPathsForDisplay(props.paths));
-
 /** `rows` 키와 목록 `path` 문자열(NFC/NFD) 불일치 시에도 행을 찾습니다. */
 const rowByPath = computed(() => {
   const map: Record<string, FolderRootRow | undefined> = {};
-  for (const path of sortedPaths.value) {
+  for (const path of props.paths) {
     map[path] = lookupFolderRow(props.rows, path);
   }
   return map;
@@ -126,7 +123,7 @@ function onRowClick(path: string, e: MouseEvent) {
     :aria-label="$t('workspace.foldersPanel')"
   >
     <li
-      v-for="path in sortedPaths"
+      v-for="path in props.paths"
       :key="path"
       role="option"
       :aria-selected="isRowSelected(path)"
@@ -140,43 +137,45 @@ function onRowClick(path: string, e: MouseEvent) {
       @click="onRowClick(path, $event)"
     >
       <div v-if="viewMode === 'list'" class="row">
-        <span class="name">{{ folderNameFromPath(path) }}</span>
-        <div class="paths-grid">
-          <code class="cell local">{{ path }}</code>
-          <code v-if="rowMetaPending(path)" class="cell remote muted">…</code>
-          <span v-else-if="rowByPath[path]?.gitError" class="cell remote muted">{{ $t("workspace.remoteNotGit") }}</span>
-          <span v-else-if="rowByPath[path]?.remote" class="cell remote">
-            <code>{{ rowByPath[path]!.remote }}</code>
-            <small
-              v-if="(rowByPath[path]!.remoteCount ?? 0) > 1"
-              class="remote-more"
-            >
-              {{ $t("workspace.remoteMoreCount", { count: rowByPath[path]!.remoteCount - 1 }) }}
+        <!-- 1행: 폴더명 + 브랜치/상태 -->
+        <div class="row-main">
+          <span class="name">{{ folderNameFromPath(path) }}</span>
+          <div class="tail">
+            <span v-if="!rowByPath[path]?.gitError" class="branch">{{
+              rowMetaPending(path) ? "…" : (rowByPath[path]?.branch ?? "—")
+            }}</span>
+            <span class="status">
+              <template v-if="rowMetaPending(path)">…</template>
+              <template v-else-if="!rowByPath[path]">—</template>
+              <template v-else-if="rowByPath[path]!.gitError">
+                <span class="status-tag status-tag--non-git">{{ $t("workspace.notGitRepo") }}</span>
+              </template>
+              <template v-else-if="rowByPath[path]!.clean">
+                <span class="status-tag status-tag--clean">{{ $t("workspace.statusClean") }}</span>
+              </template>
+              <template v-else>
+                <WorkingTreeStatusLabel
+                  :tracked-changes="rowByPath[path]!.trackedChanges"
+                  :untracked-files="rowByPath[path]!.untrackedFiles"
+                />
+              </template>
+            </span>
+          </div>
+        </div>
+        <!-- 2행: 로컬 경로 + 리모트 경로 (보조 텍스트) -->
+        <div class="row-sub">
+          <code class="path-local">{{ path }}</code>
+          <template v-if="rowMetaPending(path)">
+            <span class="path-remote muted">…</span>
+          </template>
+          <span v-else-if="rowByPath[path]?.gitError" class="path-remote muted">{{ $t("workspace.remoteNotGit") }}</span>
+          <span v-else-if="rowByPath[path]?.remote" class="path-remote">
+            {{ rowByPath[path]!.remote
+            }}<small v-if="(rowByPath[path]!.remoteCount ?? 0) > 1" class="remote-more">
+              +{{ rowByPath[path]!.remoteCount - 1 }}
             </small>
           </span>
-          <span v-else class="cell remote muted">{{ $t("workspace.remoteNoOrigin") }}</span>
-        </div>
-        <div class="tail">
-          <span class="branch">{{
-            rowMetaPending(path) ? "…" : (rowByPath[path]?.branch ?? "—")
-          }}</span>
-          <span class="dash" aria-hidden="true">-</span>
-          <span class="status">
-            <template v-if="rowMetaPending(path)">…</template>
-            <template v-else-if="!rowByPath[path]">—</template>
-            <template v-else-if="rowByPath[path]!.gitError">
-              <span class="status-tag status-tag--non-git">{{ $t("workspace.notGitRepo") }}</span>
-            </template>
-            <template v-else-if="rowByPath[path]!.clean">
-              <span class="status-tag status-tag--clean">{{ $t("workspace.statusClean") }}</span>
-            </template>
-            <template v-else>
-              <WorkingTreeStatusLabel
-                :tracked-changes="rowByPath[path]!.trackedChanges"
-                :untracked-files="rowByPath[path]!.untrackedFiles"
-              />
-            </template>
-          </span>
+          <span v-else class="path-remote muted">{{ $t("workspace.remoteNoOrigin") }}</span>
         </div>
       </div>
       <div v-else class="icon-card">
@@ -261,69 +260,42 @@ function onRowClick(path: string, e: MouseEvent) {
 
 .row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 6px 10px;
+  flex-direction: column;
+  gap: 3px;
   width: 100%;
   min-width: 0;
 }
 
-.name {
-  font-weight: 600;
-  font-size: 0.72rem;
-  flex-shrink: 0;
-  line-height: 1.25;
-}
-
-.paths-grid {
-  flex: 1 1 10rem;
+/* 1행: 폴더명 + 우측 브랜치/상태 */
+.row-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
-  display: grid;
-  grid-template-rows: auto auto;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 2px;
-  align-content: start;
-  justify-items: stretch;
 }
 
-.cell {
-  margin: 0;
-  padding: 0;
-  font-family: ui-monospace, monospace;
-  font-size: 0.55rem;
-  word-break: break-all;
+.name {
+  flex: 1 1 0;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.82rem;
   line-height: 1.25;
-  text-align: left;
-}
-
-.local {
-  color: var(--color-text);
-  opacity: 0.9;
-}
-
-.remote {
-  color: var(--color-text);
-  opacity: 0.82;
-}
-
-.remote-more {
-  margin-left: 6px;
-  font-size: 0.62rem;
-  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tail {
+  flex-shrink: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 6px;
-  flex: 0 1 auto;
-  margin-left: auto;
+  align-items: center;
+  gap: 5px;
 }
 
 .branch {
   font-family: ui-monospace, monospace;
   font-size: 0.68rem;
+  opacity: 0.8;
 }
 
 .status {
@@ -354,14 +326,41 @@ function onRowClick(path: string, e: MouseEvent) {
   background: rgb(148 163 184 / 14%);
 }
 
-.status.dirty {
-  color: #fbbf24;
+/* 2행: 경로 텍스트들 (보조) */
+.row-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 
-.dash {
-  opacity: 0.4;
-  user-select: none;
-  font-size: 0.68rem;
+.path-local {
+  font-family: ui-monospace, monospace;
+  font-size: 0.62rem;
+  opacity: 0.65;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.path-remote {
+  font-family: ui-monospace, monospace;
+  font-size: 0.58rem;
+  opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  line-height: 1.3;
+  font-style: normal;
+}
+
+.remote-more {
+  margin-left: 4px;
+  font-size: 0.58rem;
+  opacity: 0.8;
 }
 
 .muted {

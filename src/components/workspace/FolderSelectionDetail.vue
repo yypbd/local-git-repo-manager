@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { FolderRootRow } from "@/composables/useFolderRootRows";
-import WorkingTreeStatusLabel from "@/components/workspace/WorkingTreeStatusLabel.vue";
 import GitStatusPathList from "@/components/workspace/GitStatusPathList.vue";
 import { invoke } from "@tauri-apps/api/core";
 import { repoPathArgs } from "@/utils/tauriRepoPath";
@@ -13,6 +12,9 @@ const props = defineProps<{
   loading: boolean;
   canPathActions?: boolean;
   revealLabelKey?: string;
+  canMove?: boolean;
+  canGitInit?: boolean;
+  canGitRemoveRepo?: boolean;
 }>();
 const emit = defineEmits<{
   copyPath: [];
@@ -20,8 +22,16 @@ const emit = defineEmits<{
   openRemoteInBrowser: [];
   revealPath: [];
   openExternal: [];
+  openMoveModal: [];
+  gitInit: [];
+  gitRemove: [];
+  openRemoteManager: [];
+  openArchive: [];
+  openGitignore: [];
 }>();
 const { path, row, loading } = toRefs(props);
+
+const isGitRepo = computed(() => Boolean(path.value && row.value && !row.value.gitError));
 
 /** 선택 경로의 `folder_root_row`가 아직 없을 때만 — 전체 목록 로딩 중이어도 이미 도착한 행은 표시 */
 const folderMetaPending = computed(() => loading.value && !row.value);
@@ -265,22 +275,78 @@ const displayBranchName = computed(() => {
               </div>
             </dd>
           </div>
-          <div class="field">
-            <dt>{{ $t("workspace.statusLabel") }}</dt>
-            <dd>
-              <template v-if="folderMetaPending">…</template>
-              <template v-else-if="!row">—</template>
-              <template v-else-if="row.gitError">{{ $t("workspace.notGitRepo") }}</template>
-              <template v-else-if="row.clean">{{ $t("workspace.statusClean") }}</template>
-              <template v-else>
-                <WorkingTreeStatusLabel
-                  :tracked-changes="row.trackedChanges"
-                  :untracked-files="row.untrackedFiles"
-                />
-              </template>
-            </dd>
-          </div>
         </dl>
+        <div class="git-actions">
+          <!-- 그룹 1: 폴더 이동 -->
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            :disabled="!canMove"
+            @click="emit('openMoveModal')"
+          >
+            <span aria-hidden="true">📦</span>
+            {{ $t("workspace.moveFolderToOtherProject") }}
+          </Button>
+
+          <div class="action-divider" aria-hidden="true" />
+
+          <!-- 그룹 2: Git 구조 (.git 존재 여부) -->
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            :disabled="!canGitInit"
+            @click="emit('gitInit')"
+          >
+            <span aria-hidden="true">🌱</span>
+            {{ $t("workspace.gitInit") }}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="destructive"
+            :disabled="!canGitRemoveRepo"
+            @click="emit('gitRemove')"
+          >
+            <span aria-hidden="true">⚠️</span>
+            {{ $t("workspace.gitRemoveRepo") }}
+          </Button>
+
+          <div class="action-divider" aria-hidden="true" />
+
+          <!-- 그룹 3: Git 내용 (Git repo일 때만 활성) -->
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            :disabled="!isGitRepo"
+            @click="emit('openRemoteManager')"
+          >
+            <span aria-hidden="true">🌐</span>
+            {{ $t("workspace.actionRemoteManager") }}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            :disabled="!isGitRepo"
+            @click="emit('openArchive')"
+          >
+            <span aria-hidden="true">🗜️</span>
+            {{ $t("workspace.actionArchive") }}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            :disabled="!isGitRepo"
+            @click="emit('openGitignore')"
+          >
+            <span aria-hidden="true">✍️</span>
+            {{ $t("workspace.editGitignore") }}
+          </Button>
+        </div>
       </template>
     </div>
 
@@ -475,6 +541,24 @@ dd {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.git-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--color-border);
+}
+
+.action-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0 2px;
 }
 
 .remote-more {

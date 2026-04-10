@@ -28,15 +28,8 @@ const showSettings = ref(false);
       <aside class="col col-projects">
         <slot name="projects" />
       </aside>
-      <div class="col-right">
-        <div class="col-folders-area">
-          <slot name="folders" />
-        </div>
-        <div class="col-detail-stack">
-          <div class="detail-scroll">
-            <slot name="detail" />
-          </div>
-        </div>
+      <div class="col-folders-area">
+        <slot name="folders" />
       </div>
     </div>
 
@@ -110,15 +103,6 @@ const showSettings = ref(false);
   background: var(--color-bg);
 }
 
-.col-right {
-  min-height: 0;
-  min-width: 0;
-  display: grid;
-  /* 아래 상세·액션 행은 내용 높이에 맞춤(불필요한 여백 제거) */
-  grid-template-rows: minmax(120px, 1fr) auto;
-  border-right: none;
-}
-
 .col-folders-area {
   display: flex;
   flex-direction: column;
@@ -129,21 +113,5 @@ const showSettings = ref(false);
   border-bottom: 1px solid var(--color-border);
 }
 
-.col-detail-stack {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-}
 
-.detail-scroll {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: visible;
-  padding: 6px 10px 8px;
-}
 </style>

@@ -7,7 +7,6 @@ import { useToastStore } from "@/stores/toast";
 import AppShell from "@/layouts/AppShell.vue";
 import ProjectSidebar from "@/components/workspace/ProjectSidebar.vue";
 import ProjectFolderPanel from "@/components/workspace/ProjectFolderPanel.vue";
-import ProjectDetailPanel from "@/components/workspace/ProjectDetailPanel.vue";
 import { useFolderRootRows } from "@/composables/useFolderRootRows";
 import { useProjectsStore } from "@/stores/projects";
 
@@ -98,14 +97,6 @@ watch(
         :folder-rows-total="folderRowsTotal"
         :reload="reloadFolderRows"
         @dropped="addFolders"
-      />
-    </template>
-    <template #detail>
-      <ProjectDetailPanel
-        :project="project"
-        :folder-rows="folderRows"
-        :selected-folder-path="selectedFolderPath"
-        :reload-folder-rows="reloadFolderRows"
       />
     </template>
   </AppShell>
