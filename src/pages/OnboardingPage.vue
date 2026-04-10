@@ -6,9 +6,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { confirmDataRoot, getBootstrap } from "@/composables/bootstrap";
 import { pickDirectory } from "@/composables/pickFolder";
 import { useToastStore } from "@/stores/toast";
-import UiInput from "@/components/ui/UiInput.vue";
-import UiSelect from "@/components/ui/UiSelect.vue";
-import UiButton from "@/components/ui/UiButton.vue";
+import Input from "@/components/ui/Input.vue";
+import Select from "@/components/ui/Select.vue";
+import Button from "@/components/ui/Button.vue";
 
 type AppSettingsPayload = {
   dataRootPath?: string;
@@ -111,33 +111,33 @@ const pickDataRootPath = async () => {
     <label class="field-block">
       <span class="label">{{ $t("onboarding.selectedCaption") }}</span>
       <div class="path-row">
-        <UiInput
+        <Input
           v-model="selectedPath"
           :placeholder="$t('onboarding.pathPlaceholder')"
           spellcheck="false"
           autocomplete="off"
         />
-        <UiButton type="button" size="sm" variant="secondary" @click="pickDataRootPath">
+        <Button type="button" size="sm" variant="secondary" @click="pickDataRootPath">
           {{ $t("onboarding.pickFolder") }}
-        </UiButton>
+        </Button>
       </div>
     </label>
 
     <label class="field-block">
       <span class="label">{{ $t("settings.localeHeading") }}</span>
-      <UiSelect v-model="selectedLocale" class="locale-select">
+      <Select v-model="selectedLocale" class="locale-select">
         <option value="ko">{{ $t("settings.localeNameKo") }}</option>
         <option value="en">{{ $t("settings.localeNameEn") }}</option>
-      </UiSelect>
+      </Select>
     </label>
 
     <div class="actions">
-      <UiButton type="button" size="sm" variant="secondary" @click="selectedPath = recommendedPath">
+      <Button type="button" size="sm" variant="secondary" @click="selectedPath = recommendedPath">
         {{ $t("onboarding.useRecommended") }}
-      </UiButton>
-      <UiButton type="button" size="sm" variant="primary" @click="completeOnboarding">
+      </Button>
+      <Button type="button" size="sm" variant="default" @click="completeOnboarding">
         {{ $t("onboarding.confirm") }}
-      </UiButton>
+      </Button>
     </div>
   </section>
 </template>

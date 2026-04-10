@@ -2,11 +2,15 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { invoke } from "@tauri-apps/api/core";
+import { DialogRoot, DialogClose } from "radix-vue";
 import { pickDirectory } from "@/composables/pickFolder";
 import { useToastStore } from "@/stores/toast";
-import { useDialogEnterConfirm, useDialogEscape } from "@/composables/useDialogShortcuts";
 import { outputParentDirArgs, repoPathArgs } from "@/utils/tauriRepoPath";
-import UiButton from "@/components/ui/UiButton.vue";
+import DialogContent from "@/components/ui/DialogContent.vue";
+import DialogHeader from "@/components/ui/DialogHeader.vue";
+import DialogTitle from "@/components/ui/DialogTitle.vue";
+import DialogFooter from "@/components/ui/DialogFooter.vue";
+import Button from "@/components/ui/Button.vue";
 
 const props = defineProps<{ repoPath: string | null }>();
 const emit = defineEmits<{ close: [] }>();
@@ -43,113 +47,38 @@ const pickAndExport = async () => {
     exporting.value = false;
   }
 };
-
-useDialogEscape(() => emit("close"));
-useDialogEnterConfirm(
-  () => {
-    void pickAndExport();
-  },
-  { enabled: () => canExport.value && !exporting.value },
-);
 </script>
 
 <template>
-  <Teleport to="body">
-    <div class="backdrop modal-backdrop" @click.self="emit('close')">
-      <div class="dialog" @click.stop>
-        <h3 class="title">{{ $t("workspace.archiveTitle") }}</h3>
-        <p class="body">{{ $t("workspace.archiveBody") }}</p>
-        <p class="filename-hint">{{ $t("workspace.archiveFilenameHint") }}</p>
-        <div class="actions">
-          <UiButton type="button" size="sm" variant="secondary" @click="emit('close')">
-            {{ $t("workspace.cancel") }}
-          </UiButton>
-          <UiButton
-            type="button"
-            size="sm"
-            variant="primary"
-            :disabled="!canExport || exporting"
-            @click="pickAndExport"
-          >
-            {{ exporting ? $t("workspace.archiveExporting") : $t("workspace.archivePickExport") }}
-          </UiButton>
-        </div>
+  <DialogRoot :open="true" @update:open="(v: boolean) => { if (!v) emit('close') }">
+    <DialogContent class="max-w-sm">
+      <DialogHeader>
+        <DialogTitle>{{ $t("workspace.archiveTitle") }}</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-2 px-4 py-3">
+        <p class="text-sm text-[var(--muted-foreground)] leading-snug m-0">
+          {{ $t("workspace.archiveBody") }}
+        </p>
+        <p class="font-mono text-xs text-[#6b7280] leading-snug m-0">
+          {{ $t("workspace.archiveFilenameHint") }}
+        </p>
       </div>
-    </div>
-  </Teleport>
+      <DialogFooter>
+        <DialogClose as-child>
+          <Button type="button" size="sm" variant="secondary" @click="emit('close')">
+            {{ $t("workspace.cancel") }}
+          </Button>
+        </DialogClose>
+        <Button
+          type="button"
+          size="sm"
+          variant="default"
+          :disabled="!canExport || exporting"
+          @click="pickAndExport"
+        >
+          {{ exporting ? $t("workspace.archiveExporting") : $t("workspace.archivePickExport") }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </DialogRoot>
 </template>
-
-<style scoped>
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 20000;
-  display: grid;
-  place-items: center;
-  background: rgb(0 0 0 / 45%);
-  padding: 16px;
-}
-
-.dialog {
-  width: min(420px, 100%);
-  display: grid;
-  gap: 10px;
-  background: #161b29;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 16px;
-}
-
-.title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.body,
-.filename-hint {
-  margin: 0;
-  font-size: 0.85rem;
-  line-height: 1.45;
-  color: #9ca3af;
-}
-
-.filename-hint {
-  font-family: ui-monospace, monospace;
-  font-size: 0.78rem;
-  color: #6b7280;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding-top: 4px;
-}
-
-.btn-cancel {
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.btn-primary {
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  border: 1px solid #5b7cff;
-  background: rgb(91 124 255 / 22%);
-  color: #e8ecff;
-  cursor: pointer;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-</style>

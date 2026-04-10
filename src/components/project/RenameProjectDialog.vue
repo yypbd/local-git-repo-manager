@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { useDialogEscape, useDialogInputFocus } from "@/composables/useDialogShortcuts";
-import UiInput from "@/components/ui/UiInput.vue";
-import UiButton from "@/components/ui/UiButton.vue";
+import { DialogRoot, DialogClose } from "radix-vue";
+import { useDialogInputFocus } from "@/composables/useDialogShortcuts";
+import DialogContent from "@/components/ui/DialogContent.vue";
+import DialogHeader from "@/components/ui/DialogHeader.vue";
+import DialogTitle from "@/components/ui/DialogTitle.vue";
+import DialogFooter from "@/components/ui/DialogFooter.vue";
+import Input from "@/components/ui/Input.vue";
+import Button from "@/components/ui/Button.vue";
 
 const props = defineProps<{ initialName: string }>();
 const emit = defineEmits<{ close: []; submit: [name: string] }>();
@@ -10,7 +15,6 @@ const emit = defineEmits<{ close: []; submit: [name: string] }>();
 const name = ref(props.initialName);
 const inputRef = ref<{ focus?: () => void } | null>(null);
 useDialogInputFocus(inputRef);
-useDialogEscape(() => emit("close"));
 
 watch(
   () => props.initialName,
@@ -25,47 +29,20 @@ const submit = () => {
 </script>
 
 <template>
-  <div class="backdrop modal-backdrop" @click.self="emit('close')">
-    <div class="dialog" @click.stop>
-      <h3>프로젝트 이름 변경</h3>
-      <form class="form" @submit.prevent="submit">
-        <UiInput ref="inputRef" v-model="name" autocomplete="off" />
-        <div class="actions">
-          <UiButton type="button" size="sm" variant="secondary" @click="emit('close')">취소</UiButton>
-          <UiButton type="submit" size="sm" variant="primary">저장</UiButton>
-        </div>
+  <DialogRoot :open="true" @update:open="(v: boolean) => { if (!v) emit('close') }">
+    <DialogContent class="max-w-xs">
+      <DialogHeader>
+        <DialogTitle>프로젝트 이름 변경</DialogTitle>
+      </DialogHeader>
+      <form class="grid gap-3 px-4 py-3" @submit.prevent="submit">
+        <Input ref="inputRef" v-model="name" autocomplete="off" />
+        <DialogFooter class="border-0 p-0 pt-1">
+          <DialogClose as-child>
+            <Button type="button" size="sm" variant="secondary" @click="emit('close')">취소</Button>
+          </DialogClose>
+          <Button type="submit" size="sm" variant="default">저장</Button>
+        </DialogFooter>
       </form>
-    </div>
-  </div>
+    </DialogContent>
+  </DialogRoot>
 </template>
-
-<style scoped>
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgb(0 0 0 / 45%);
-  display: grid;
-  place-items: center;
-}
-
-.dialog {
-  width: 320px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: #111522;
-  padding: 14px;
-  display: grid;
-  gap: 10px;
-}
-
-.form {
-  display: grid;
-  gap: 10px;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-</style>

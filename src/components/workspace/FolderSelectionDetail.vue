@@ -5,7 +5,7 @@ import GitStatusPathList from "@/components/workspace/GitStatusPathList.vue";
 import { invoke } from "@tauri-apps/api/core";
 import { repoPathArgs } from "@/utils/tauriRepoPath";
 import { computed, ref, watch, toRefs } from "vue";
-import UiButton from "@/components/ui/UiButton.vue";
+import Button from "@/components/ui/Button.vue";
 
 const props = defineProps<{
   path: string | null;
@@ -117,7 +117,7 @@ const displayBranchName = computed(() => {
   <div class="detail">
     <div class="tabs-wrap">
       <div class="tabs" role="tablist">
-        <UiButton
+        <Button
           type="button"
           class="tab"
           size="sm"
@@ -128,8 +128,8 @@ const displayBranchName = computed(() => {
         >
           <span class="tab-ico" aria-hidden="true">ℹ️</span>
           {{ $t("workspace.folderDetailTabDefault") }}
-        </UiButton>
-        <UiButton
+        </Button>
+        <Button
           type="button"
           class="tab"
           size="sm"
@@ -140,8 +140,8 @@ const displayBranchName = computed(() => {
         >
           <span class="tab-ico" aria-hidden="true">🌿</span>
           {{ $t("workspace.folderDetailTabBranch") }}
-        </UiButton>
-        <UiButton
+        </Button>
+        <Button
           type="button"
           class="tab"
           size="sm"
@@ -152,8 +152,8 @@ const displayBranchName = computed(() => {
         >
           <span class="tab-ico" aria-hidden="true">📝</span>
           {{ $t("workspace.folderDetailTabChangedAdded") }}
-        </UiButton>
-        <UiButton
+        </Button>
+        <Button
           type="button"
           class="tab"
           size="sm"
@@ -164,8 +164,8 @@ const displayBranchName = computed(() => {
         >
           <span class="tab-ico" aria-hidden="true">📌</span>
           {{ $t("workspace.folderDetailTabUntracked") }}
-        </UiButton>
-        <UiButton
+        </Button>
+        <Button
           type="button"
           class="tab"
           size="sm"
@@ -176,7 +176,7 @@ const displayBranchName = computed(() => {
         >
           <span class="tab-ico" aria-hidden="true">🚫</span>
           {{ $t("workspace.folderDetailTabGitignore") }}
-        </UiButton>
+        </Button>
       </div>
     </div>
 
@@ -193,7 +193,7 @@ const displayBranchName = computed(() => {
             <dd>
               <code class="mono">{{ path }}</code>
               <div class="path-actions">
-                <UiButton
+                <Button
                   type="button"
                   size="sm"
                   variant="secondary"
@@ -202,8 +202,8 @@ const displayBranchName = computed(() => {
                 >
                   <span aria-hidden="true">📋</span>
                   {{ $t("workspace.copyLocalPath") }}
-                </UiButton>
-                <UiButton
+                </Button>
+                <Button
                   type="button"
                   size="sm"
                   variant="secondary"
@@ -212,8 +212,8 @@ const displayBranchName = computed(() => {
                 >
                   <span aria-hidden="true">🧭</span>
                   {{ $t(revealLabelKey || "workspace.openInFileManager") }}
-                </UiButton>
-                <UiButton
+                </Button>
+                <Button
                   type="button"
                   size="sm"
                   variant="secondary"
@@ -222,7 +222,7 @@ const displayBranchName = computed(() => {
                 >
                   <span aria-hidden="true">🚀</span>
                   {{ $t("workspace.openExternalApp") }}
-                </UiButton>
+                </Button>
               </div>
             </dd>
           </div>
@@ -242,7 +242,7 @@ const displayBranchName = computed(() => {
               </span>
               <span v-else class="muted">{{ $t("workspace.remoteNoOrigin") }}</span>
               <div class="path-actions">
-                <UiButton
+                <Button
                   type="button"
                   size="sm"
                   variant="secondary"
@@ -251,8 +251,8 @@ const displayBranchName = computed(() => {
                 >
                   <span aria-hidden="true">🔗</span>
                   {{ $t("workspace.copyUrlMenu") }}
-                </UiButton>
-                <UiButton
+                </Button>
+                <Button
                   type="button"
                   size="sm"
                   variant="secondary"
@@ -261,7 +261,7 @@ const displayBranchName = computed(() => {
                 >
                   <span aria-hidden="true">🌐</span>
                   {{ $t("workspace.openRemoteInBrowser") }}
-                </UiButton>
+                </Button>
               </div>
             </dd>
           </div>

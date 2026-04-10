@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import SettingsDialog from "@/components/settings/SettingsDialog.vue";
-import UiButton from "@/components/ui/UiButton.vue";
+import Button from "@/components/ui/Button.vue";
 
 const showSettings = ref(false);
 </script>
@@ -14,10 +14,10 @@ const showSettings = ref(false);
         {{ $t("app.title") }}
       </strong>
       <div class="toolbar-actions">
-        <UiButton type="button" size="sm" variant="secondary" @click="showSettings = true">
+        <Button type="button" size="sm" variant="secondary" @click="showSettings = true">
           <span class="ico" aria-hidden="true">⚙️</span>
           {{ $t("nav.settings") }}
-        </UiButton>
+        </Button>
       </div>
     </header>
 

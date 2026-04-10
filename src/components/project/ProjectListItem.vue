@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { Project } from "@/stores/projects";
-import UiButton from "@/components/ui/UiButton.vue";
+import Button from "@/components/ui/Button.vue";
 
 const props = defineProps<{
   project: Project;
@@ -18,49 +18,75 @@ const folderCount = computed(() => props.project.rootPaths?.length ?? 0);
 </script>
 
 <template>
-  <div class="row">
-    <UiButton
+  <!-- row -->
+  <div class="flex items-stretch gap-1 min-w-0">
+    <!--
+      drag-handle: Tailwind handles flex-shrink, border, rounded, font, padding,
+      color, user-select. The four drag-specific properties that have no direct
+      Tailwind equivalent (cursor:grab, touch-action:none, opacity:0.65,
+      width:22px) are kept in the scoped <style> block below.
+    -->
+    <Button
       type="button"
       size="sm"
       variant="secondary"
-      class="drag-handle"
+      class="drag-handle flex-shrink-0 border border-border rounded-sm bg-surface-muted text-xs leading-none !p-0 text-inherit select-none"
       :title="$t('workspace.projectDragReorder')"
       @pointerdown="emit('reorderPointerDown', $event, project)"
       @click.prevent.stop
     >
       ⠿
-    </UiButton>
-    <RouterLink :to="`/projects/${project.id}`" class="item" active-class="active" draggable="false">
-      <div class="headline">
-        <span class="title" :title="project.name">{{ project.name }}</span>
-        <div class="right-tools">
-          <span class="badge">
+    </Button>
+
+    <!-- item link -->
+    <RouterLink
+      :to="`/projects/${project.id}`"
+      class="item flex-1 min-w-0 border border-border rounded-md p-[10px] grid gap-[6px] no-underline text-inherit transition-[background,border-color] duration-[120ms] ease-[ease] hover:bg-surface-muted"
+      active-class="active"
+      draggable="false"
+    >
+      <!-- headline -->
+      <div class="flex items-center justify-start gap-2 min-h-[26px] min-w-0">
+        <!-- title -->
+        <span
+          class="inline-flex items-center font-semibold leading-none flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+          :title="project.name"
+        >
+          {{ project.name }}
+        </span>
+
+        <!-- right-tools -->
+        <div class="inline-flex items-center gap-[6px] ml-auto flex-shrink-0">
+          <!-- badge -->
+          <span class="inline-flex items-center gap-1 border border-border rounded-full text-[0.72rem] px-[7px] py-[1px] leading-none bg-white/[0.04] flex-shrink-0">
             <span aria-hidden="true">📁</span>
             {{ folderCount }}
           </span>
-          <div class="actions">
-            <UiButton
+
+          <!-- actions -->
+          <div class="flex gap-1">
+            <Button
               type="button"
               size="sm"
               variant="secondary"
-              class="icon-btn"
+              class="icon-btn !w-[26px] !p-0 inline-flex items-center"
               :title="$t('workspace.projectRename')"
               :aria-label="$t('workspace.projectRename')"
               @click.prevent.stop="emit('rename', project)"
             >
               <span aria-hidden="true">✏️</span>
-            </UiButton>
-            <UiButton
+            </Button>
+            <Button
               type="button"
               size="sm"
               variant="danger"
-              class="icon-btn"
+              class="icon-btn !w-[26px] !p-0 inline-flex items-center"
               :title="$t('workspace.projectDelete')"
               :aria-label="$t('workspace.projectDelete')"
               @click.prevent.stop="emit('delete', project)"
             >
               <span aria-hidden="true">🗑️</span>
-            </UiButton>
+            </Button>
           </div>
         </div>
       </div>
@@ -69,27 +95,15 @@ const folderCount = computed(() => props.project.rootPaths?.length ?? 0);
 </template>
 
 <style scoped>
-.row {
-  display: flex;
-  align-items: stretch;
-  gap: 4px;
-  min-width: 0;
-}
-
+/*
+  Drag-handle properties with no direct Tailwind equivalent — kept here per
+  TechLead directive (cursor:grab, touch-action:none, opacity:0.65, width:22px).
+*/
 .drag-handle {
-  flex-shrink: 0;
   width: 22px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-surface-muted);
-  cursor: grab;
-  font-size: 0.75rem;
-  line-height: 1;
-  padding: 0;
-  color: inherit;
   opacity: 0.65;
+  cursor: grab;
   touch-action: none;
-  user-select: none;
 }
 
 .drag-handle:hover {
@@ -100,82 +114,9 @@ const folderCount = computed(() => props.project.rootPaths?.length ?? 0);
   cursor: grabbing;
 }
 
-.item {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 10px;
-  display: grid;
-  gap: 6px;
-  text-decoration: none;
-  color: inherit;
-  transition: background 0.12s ease, border-color 0.12s ease;
-}
-
-.item:hover {
-  background: var(--color-surface-muted);
-}
-
+/* Active state for the RouterLink — uses a colour not in the Tailwind token set */
 .item.active {
   border-color: #7aa2ff;
   background: rgba(122, 162, 255, 0.12);
-}
-
-.title {
-  display: inline-flex;
-  align-items: center;
-  font-weight: 600;
-  line-height: 1;
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.headline {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  min-height: 26px;
-  min-width: 0;
-}
-
-.right-tools {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  font-size: 0.72rem;
-  padding: 1px 7px;
-  line-height: 1;
-  background: rgb(255 255 255 / 4%);
-  flex-shrink: 0;
-}
-
-.actions {
-  display: flex;
-  gap: 4px;
-}
-
-.actions button {
-  display: inline-flex;
-  align-items: center;
-}
-
-.icon-btn {
-  width: 26px;
-  padding: 0;
 }
 </style>

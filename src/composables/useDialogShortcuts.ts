@@ -7,7 +7,11 @@ export function useDialogInputFocus(elRef: Ref<HTMLElement | null | undefined>) 
   });
 }
 
-/** Esc: 취소(닫기) */
+/**
+ * @deprecated Radix Dialog handles Escape natively via @escapeKeyDown.prevent on DialogContent.
+ * This function is kept for any non-migrated dialogs only.
+ * Remove calls from migrated components — they no longer need it.
+ */
 export function useDialogEscape(onCancel: () => void) {
   const handler = (e: KeyboardEvent) => {
     if (e.key !== "Escape") return;

@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import { DialogRoot, DialogClose } from "radix-vue";
 import type { Project } from "@/stores/projects";
-import { useDialogEscape, useDialogInputFocus } from "@/composables/useDialogShortcuts";
-import UiSelect from "@/components/ui/UiSelect.vue";
-import UiButton from "@/components/ui/UiButton.vue";
+import { useDialogInputFocus } from "@/composables/useDialogShortcuts";
+import DialogContent from "@/components/ui/DialogContent.vue";
+import DialogHeader from "@/components/ui/DialogHeader.vue";
+import DialogTitle from "@/components/ui/DialogTitle.vue";
+import DialogFooter from "@/components/ui/DialogFooter.vue";
+import Select from "@/components/ui/Select.vue";
+import Button from "@/components/ui/Button.vue";
 
 const props = defineProps<{ projects: Project[] }>();
 const emit = defineEmits<{ close: []; submit: [projectId: string] }>();
@@ -11,7 +16,6 @@ const targetId = ref(props.projects[0]?.id ?? "");
 const selectRef = ref<{ focus?: () => void } | null>(null);
 
 useDialogInputFocus(selectRef);
-useDialogEscape(() => emit("close"));
 
 watch(
   () => props.projects,
@@ -31,46 +35,22 @@ const submit = () => {
 </script>
 
 <template>
-  <div class="backdrop modal-backdrop" @click.self="emit('close')">
-    <div class="dialog" @click.stop>
-      <h3>다른 프로젝트로 이동</h3>
-      <form class="form" @submit.prevent="submit">
-        <UiSelect ref="selectRef" v-model="targetId">
+  <DialogRoot :open="true" @update:open="(v: boolean) => { if (!v) emit('close') }">
+    <DialogContent class="max-w-xs">
+      <DialogHeader>
+        <DialogTitle>다른 프로젝트로 이동</DialogTitle>
+      </DialogHeader>
+      <form class="grid gap-3 px-4 py-3" @submit.prevent="submit">
+        <Select ref="selectRef" v-model="targetId">
           <option v-for="item in projects" :key="item.id" :value="item.id">{{ item.name }}</option>
-        </UiSelect>
-        <div class="actions">
-          <UiButton type="button" size="sm" variant="secondary" @click="emit('close')">취소</UiButton>
-          <UiButton type="submit" size="sm" variant="primary">이동</UiButton>
-        </div>
+        </Select>
+        <DialogFooter class="border-0 p-0 pt-1">
+          <DialogClose as-child>
+            <Button type="button" size="sm" variant="secondary" @click="emit('close')">취소</Button>
+          </DialogClose>
+          <Button type="submit" size="sm" variant="default">이동</Button>
+        </DialogFooter>
       </form>
-    </div>
-  </div>
+    </DialogContent>
+  </DialogRoot>
 </template>
-
-<style scoped>
-.backdrop {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgb(0 0 0 / 40%);
-}
-.dialog {
-  width: 320px;
-  background: #161b29;
-  border: 1px solid var(--color-border);
-  padding: 12px;
-  border-radius: 8px;
-  display: grid;
-  gap: 8px;
-}
-.form {
-  display: grid;
-  gap: 8px;
-}
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-</style>

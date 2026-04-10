@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { invoke } from "@tauri-apps/api/core";
+import { DialogRoot } from "radix-vue";
+import { TabsRoot, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs/index";
 import SettingsDataRootSection from "@/components/settings/SettingsDataRootSection.vue";
 import SettingsExternalToolsTable from "@/components/settings/SettingsExternalToolsTable.vue";
 import SettingsGitSection from "@/components/settings/SettingsGitSection.vue";
 import SettingsLocale from "@/components/settings/SettingsLocale.vue";
 import { getBootstrap } from "@/composables/bootstrap";
 import { useToastStore } from "@/stores/toast";
-import UiButton from "@/components/ui/UiButton.vue";
+import DialogContent from "@/components/ui/DialogContent.vue";
+import DialogHeader from "@/components/ui/DialogHeader.vue";
+import DialogTitle from "@/components/ui/DialogTitle.vue";
+import DialogFooter from "@/components/ui/DialogFooter.vue";
+import Button from "@/components/ui/Button.vue";
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ "update:modelValue": [open: boolean] }>();
@@ -111,65 +117,43 @@ const close = () => {
   emit("update:modelValue", false);
 };
 
-let escHandler: ((e: KeyboardEvent) => void) | null = null;
-
 watch(
   () => props.modelValue,
   (open) => {
-    if (escHandler) {
-      window.removeEventListener("keydown", escHandler, true);
-      escHandler = null;
-    }
     if (open) {
       activeTab.value = "general";
       void load();
-      escHandler = (e: KeyboardEvent) => {
-        if (e.key !== "Escape") return;
-        e.preventDefault();
-        e.stopPropagation();
-        close();
-      };
-      window.addEventListener("keydown", escHandler, true);
     }
   },
 );
-
-onUnmounted(() => {
-  if (escHandler) window.removeEventListener("keydown", escHandler, true);
-});
 </script>
 
 <template>
-  <Teleport to="body">
-    <div
-      v-if="modelValue"
-      class="backdrop modal-backdrop settings-dlg-backdrop"
-      role="dialog"
-      aria-modal="true"
+  <DialogRoot :open="modelValue" @update:open="(v: boolean) => { if (!v) close() }">
+    <DialogContent
+      class="w-[min(44rem,100%)] max-h-[min(88vh,900px)] flex flex-col max-w-none"
       :aria-label="$t('settings.title')"
-      @click.self="close"
     >
-      <div class="settings-dialog" @click.stop>
-        <header class="dialog-head">
-          <h2 class="dialog-title">{{ $t("settings.title") }}</h2>
-        </header>
+      <!-- Header -->
+      <DialogHeader>
+        <DialogTitle>{{ $t("settings.title") }}</DialogTitle>
+      </DialogHeader>
 
-        <div class="dialog-scroll">
-          <div class="tab-buttons">
-            <UiButton
+      <!-- Scrollable body with tabs -->
+      <div class="min-h-0 flex-1 overflow-auto p-4">
+        <TabsRoot :model-value="activeTab" @update:model-value="(v) => activeTab = v as SettingsTab">
+          <TabsList class="flex flex-wrap gap-2 mb-4 border-b border-[var(--border)] pb-3">
+            <TabsTrigger
               v-for="tab in tabList"
               :key="tab.id"
-              type="button"
-              size="sm"
-              variant="secondary"
-              :class="{ active: activeTab === tab.id }"
-              @click="activeTab = tab.id"
+              :value="tab.id"
+              class="btn btn-sm btn-secondary rounded-sm px-3 text-xs border border-[#4a5568] bg-[#1a2029] text-[var(--foreground)] cursor-pointer transition-colors data-[state=active]:border-[#7aa2ff] data-[state=active]:bg-[#1a2440] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
             >
               {{ $t(tab.labelKey) }}
-            </UiButton>
-          </div>
+            </TabsTrigger>
+          </TabsList>
 
-          <div v-if="activeTab === 'general'" class="general-tab">
+          <TabsContent value="general" class="grid gap-6 max-w-[42rem] focus-visible:outline-none">
             <SettingsDataRootSection
               :data-root-path="settings.dataRootPath"
               :recommended-path="recommendedDataRoot"
@@ -182,107 +166,35 @@ onUnmounted(() => {
               @update-path="(path) => (settings.gitExecutablePath = path)"
               @probe="probeGit"
             />
-          </div>
+          </TabsContent>
 
-          <SettingsExternalToolsTable
-            v-if="activeTab === 'external'"
-            :tools="settings.externalTools"
-            @add="addTool"
-            @remove="removeTool"
-            @patch="patchTool"
-          />
-        </div>
-
-        <footer class="dialog-foot">
-          <UiButton type="button" variant="secondary" @click="close">
-            {{ $t("workspace.close") }}
-          </UiButton>
-          <UiButton type="button" variant="primary" @click="save">{{ $t("settings.save") }}</UiButton>
-        </footer>
+          <TabsContent value="external" class="focus-visible:outline-none">
+            <SettingsExternalToolsTable
+              :tools="settings.externalTools"
+              @add="addTool"
+              @remove="removeTool"
+              @patch="patchTool"
+            />
+          </TabsContent>
+        </TabsRoot>
       </div>
-    </div>
-  </Teleport>
+
+      <!-- Footer -->
+      <DialogFooter>
+        <Button type="button" variant="secondary" @click="close">
+          {{ $t("workspace.close") }}
+        </Button>
+        <Button type="button" variant="default" @click="save">
+          {{ $t("settings.save") }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </DialogRoot>
 </template>
 
 <style scoped>
-/**
- * 전역 `.modal-backdrop`에는 z-index만 있고 position이 없음.
- * Teleport된 루트에 fixed + inset을 반드시 줘야 뷰포트를 덮고 본문 스크롤을 유발하지 않음.
- */
-.settings-dlg-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 10050;
-  isolation: isolate;
-  background: rgb(0 0 0 / 45%);
-  padding: 24px 16px;
-  display: grid;
-  place-items: center;
-  box-sizing: border-box;
-  overflow-y: auto;
-}
-
-.settings-dialog {
-  width: min(44rem, 100%);
-  max-height: min(88vh, 900px);
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  min-height: 0;
-  background: var(--color-surface-muted, #151925);
-  border: 1px solid var(--color-border, #2f3542);
-  border-radius: 10px;
-  box-shadow: 0 16px 48px rgb(0 0 0 / 45%);
-}
-
-.dialog-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--color-border, #2f3542);
-  flex-shrink: 0;
-}
-
-.dialog-title {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.dialog-scroll {
-  min-height: 0;
-  overflow: auto;
-  padding: 16px;
-}
-
-.dialog-foot {
-  padding: 12px 16px;
-  border-top: 1px solid var(--color-border, #2f3542);
-  flex-shrink: 0;
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.tab-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.tab-buttons .active {
-  border-color: #7aa2ff;
-}
-
-.general-tab {
-  display: grid;
-  gap: 24px;
-  max-width: 42rem;
-}
-
-.general-tab :deep(.ui-control) {
+/* Preserve deep selector for settings sub-components */
+:deep(.ui-control) {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;

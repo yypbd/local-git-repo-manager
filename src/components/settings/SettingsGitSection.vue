@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { pickExecutableFile } from "@/composables/pickFolder";
-import UiInput from "@/components/ui/UiInput.vue";
-import UiButton from "@/components/ui/UiButton.vue";
+import Input from "@/components/ui/Input.vue";
+import Button from "@/components/ui/Button.vue";
 
 defineProps<{ gitExecutablePath: string; gitVersion: string }>();
 const emit = defineEmits<{ updatePath: [path: string]; probe: [] }>();
@@ -16,21 +16,21 @@ const pickGitExecutable = async () => {
   <section class="settings-block">
     <h4>{{ $t("settings.gitHeading") }}</h4>
     <div class="path-row">
-      <UiInput
+      <Input
         :model-value="gitExecutablePath"
         spellcheck="false"
         autocomplete="off"
         :placeholder="$t('settings.gitExecutablePlaceholder')"
         @update:model-value="emit('updatePath', $event)"
       />
-      <UiButton type="button" size="sm" variant="secondary" @click="pickGitExecutable">
+      <Button type="button" size="sm" variant="secondary" @click="pickGitExecutable">
         {{ $t("settings.gitPickExecutable") }}
-      </UiButton>
+      </Button>
     </div>
     <div class="git-row">
-      <UiButton type="button" size="sm" variant="secondary" @click="emit('probe')">
+      <Button type="button" size="sm" variant="secondary" @click="emit('probe')">
         {{ $t("settings.gitProbe") }}
-      </UiButton>
+      </Button>
       <span class="git-ver">{{ gitVersion || $t("settings.gitVersionUnknown") }}</span>
     </div>
   </section>
@@ -65,6 +65,6 @@ const pickGitExecutable = async () => {
 
 .git-ver {
   font-size: 0.85rem;
-  color: #9ca3af;
+  color: var(--muted-foreground);
 }
 </style>

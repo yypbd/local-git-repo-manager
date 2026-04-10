@@ -1,9 +1,17 @@
 <script setup lang="ts">
-import { ref, watch, watchEffect } from "vue";
+import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { AlertDialogRoot } from "radix-vue";
 import { useToastStore } from "@/stores/toast";
-import UiTextarea from "@/components/ui/UiTextarea.vue";
-import UiButton from "@/components/ui/UiButton.vue";
+import Textarea from "@/components/ui/Textarea.vue";
+import AlertDialogContent from "@/components/ui/AlertDialogContent.vue";
+import AlertDialogHeader from "@/components/ui/AlertDialogHeader.vue";
+import AlertDialogTitle from "@/components/ui/AlertDialogTitle.vue";
+import AlertDialogDescription from "@/components/ui/AlertDialogDescription.vue";
+import AlertDialogFooter from "@/components/ui/AlertDialogFooter.vue";
+import AlertDialogCancel from "@/components/ui/AlertDialogCancel.vue";
+import AlertDialogAction from "@/components/ui/AlertDialogAction.vue";
+import Button from "@/components/ui/Button.vue";
 
 const props = withDefaults(
   defineProps<{ content: string; hideHeading?: boolean }>(),
@@ -42,44 +50,12 @@ const copyToClipboard = async () => {
   }
 };
 
-/** Esc: 저장 확인이 열려 있으면 확인만 닫음. 에디터 textarea 포커스일 때는 상위 모달을 닫지 않음 */
-watchEffect((onCleanup) => {
-  const h = (e: KeyboardEvent) => {
-    if (e.key !== "Escape") return;
-    if (showSaveConfirm.value) {
-      e.preventDefault();
-      e.stopPropagation();
-      showSaveConfirm.value = false;
-      return;
-    }
-    const t = e.target as HTMLElement;
-    if (t.tagName === "TEXTAREA" || t.closest("textarea")) return;
-    e.preventDefault();
-    e.stopPropagation();
-    emit("cancel");
-  };
-  window.addEventListener("keydown", h, true);
-  onCleanup(() => window.removeEventListener("keydown", h, true));
-});
-
-/** 저장 확인: Enter로 확정 */
-watchEffect((onCleanup) => {
-  if (!showSaveConfirm.value) return;
-  const h = (e: KeyboardEvent) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    e.stopPropagation();
-    confirmSave();
-  };
-  window.addEventListener("keydown", h, true);
-  onCleanup(() => window.removeEventListener("keydown", h, true));
-});
 </script>
 
 <template>
   <section class="gitignore-editor">
     <h4 v-if="!hideHeading" class="title">{{ $t("workspace.gitignoreEditorTitle") }}</h4>
-    <UiTextarea
+    <Textarea
       v-model="local"
       class="editor"
       rows="14"
@@ -87,32 +63,26 @@ watchEffect((onCleanup) => {
       :placeholder="t('workspace.gitignoreEditorPlaceholder')"
     />
     <div class="actions">
-      <UiButton type="button" size="sm" variant="secondary" class="btn-secondary" @click="copyToClipboard">
+      <Button type="button" size="sm" variant="secondary" @click="copyToClipboard">
         {{ $t("workspace.gitignoreCopyButton") }}
-      </UiButton>
-      <UiButton type="button" size="sm" variant="primary" class="btn-save" @click="requestSave">
+      </Button>
+      <Button type="button" size="sm" variant="default" @click="requestSave">
         {{ $t("workspace.gitignoreSaveButton") }}
-      </UiButton>
+      </Button>
     </div>
 
-    <div
-      v-if="showSaveConfirm"
-      class="confirm-backdrop modal-backdrop"
-      @click.self="showSaveConfirm = false"
-    >
-      <div class="confirm-dialog" @click.stop>
-        <h4 class="confirm-title">{{ $t("workspace.gitignoreSaveConfirmTitle") }}</h4>
-        <p class="confirm-msg">{{ $t("workspace.gitignoreSaveConfirmMessage") }}</p>
-        <div class="confirm-actions">
-          <UiButton type="button" size="sm" variant="secondary" class="btn-cancel" @click="showSaveConfirm = false">
-            {{ $t("workspace.cancel") }}
-          </UiButton>
-          <UiButton type="button" size="sm" variant="primary" class="btn-confirm" @click="confirmSave">
-            {{ $t("workspace.gitignoreSaveButton") }}
-          </UiButton>
-        </div>
-      </div>
-    </div>
+    <AlertDialogRoot :open="showSaveConfirm" @update:open="(v) => { if (!v) showSaveConfirm = false }">
+      <AlertDialogContent class="max-w-xs">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ $t("workspace.gitignoreSaveConfirmTitle") }}</AlertDialogTitle>
+          <AlertDialogDescription>{{ $t("workspace.gitignoreSaveConfirmMessage") }}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="showSaveConfirm = false">{{ $t("workspace.cancel") }}</AlertDialogCancel>
+          <AlertDialogAction @click="confirmSave">{{ $t("workspace.gitignoreSaveButton") }}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialogRoot>
   </section>
 </template>
 
@@ -157,90 +127,4 @@ watchEffect((onCleanup) => {
   gap: 8px;
 }
 
-.btn-secondary {
-  padding: 6px 14px;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  border: 1px solid var(--color-border, #3d465c);
-  background: rgb(255 255 255 / 6%);
-  color: inherit;
-  cursor: pointer;
-}
-
-.btn-secondary:hover {
-  background: rgb(255 255 255 / 10%);
-}
-
-.btn-save {
-  padding: 6px 14px;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  border: 1px solid #5b7cff;
-  background: rgb(91 124 255 / 18%);
-  color: #e8ecff;
-  cursor: pointer;
-}
-
-.btn-save:hover {
-  background: rgb(91 124 255 / 28%);
-}
-
-.confirm-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 10060;
-  background: rgb(0 0 0 / 50%);
-  display: grid;
-  place-items: center;
-  padding: 16px;
-}
-
-.confirm-dialog {
-  width: min(400px, 100%);
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid var(--color-border, #2a3142);
-  background: #111522;
-  display: grid;
-  gap: 12px;
-}
-
-.confirm-title {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.confirm-msg {
-  margin: 0;
-  font-size: 0.85rem;
-  line-height: 1.45;
-  color: #9ca3af;
-}
-
-.confirm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.btn-cancel {
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.btn-confirm {
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  border: 1px solid #5b7cff;
-  background: rgb(91 124 255 / 22%);
-  color: #e8ecff;
-  cursor: pointer;
-}
 </style>

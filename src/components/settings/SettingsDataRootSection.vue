@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { pickDirectory } from "@/composables/pickFolder";
-import UiInput from "@/components/ui/UiInput.vue";
-import UiButton from "@/components/ui/UiButton.vue";
+import Input from "@/components/ui/Input.vue";
+import Button from "@/components/ui/Button.vue";
 
 const props = defineProps<{
   dataRootPath: string;
@@ -29,16 +29,16 @@ const useRecommended = () => {
   <section class="settings-block">
     <h4>{{ $t("settings.dataRootHeading") }}</h4>
     <div class="path-row">
-      <UiInput
+      <Input
         :model-value="dataRootPath"
         spellcheck="false"
         autocomplete="off"
         @update:model-value="emit('update', $event)"
       />
-      <UiButton type="button" size="sm" variant="secondary" @click="pickFolder">
+      <Button type="button" size="sm" variant="secondary" @click="pickFolder">
         {{ $t("settings.dataRootPickFolder") }}
-      </UiButton>
-      <UiButton
+      </Button>
+      <Button
         type="button"
         size="sm"
         variant="secondary"
@@ -46,7 +46,7 @@ const useRecommended = () => {
         @click="useRecommended"
       >
         {{ $t("settings.dataRootUseRecommended") }}
-      </UiButton>
+      </Button>
     </div>
   </section>
 </template>

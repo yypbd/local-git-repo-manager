@@ -2,11 +2,15 @@
 import { invoke } from "@tauri-apps/api/core";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { DialogRoot, DialogClose } from "radix-vue";
 import { useToastStore } from "@/stores/toast";
-import { useDialogEscape } from "@/composables/useDialogShortcuts";
 import { repoPathArgs } from "@/utils/tauriRepoPath";
-import UiInput from "@/components/ui/UiInput.vue";
-import UiButton from "@/components/ui/UiButton.vue";
+import DialogContent from "@/components/ui/DialogContent.vue";
+import DialogHeader from "@/components/ui/DialogHeader.vue";
+import DialogTitle from "@/components/ui/DialogTitle.vue";
+import DialogFooter from "@/components/ui/DialogFooter.vue";
+import Input from "@/components/ui/Input.vue";
+import Button from "@/components/ui/Button.vue";
 
 type RemoteItem = {
   name: string;
@@ -146,94 +150,88 @@ const copyText = async (v: string | null | undefined) => {
 onMounted(() => {
   void load();
 });
-
-useDialogEscape(() => emit("close"));
 </script>
 
 <template>
-  <Teleport to="body">
-    <div class="backdrop modal-backdrop" @click.self="emit('close')">
-      <div class="dialog">
-        <h3>{{ $t("remote.dialogTitle") }}</h3>
+  <DialogRoot :open="true" @update:open="(v: boolean) => { if (!v) emit('close') }">
+    <DialogContent class="w-[min(760px,96vw)] max-w-none max-h-[90vh] overflow-auto">
+      <DialogHeader>
+        <DialogTitle>{{ $t("remote.dialogTitle") }}</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-3 px-4 py-3">
         <div v-if="!canUse" class="muted">{{ $t("workspace.actionNeedsFolder") }}</div>
         <div v-else-if="checkingRepo" class="muted">{{ $t("remote.checkingRepo") }}</div>
         <div v-else-if="!isGitRepo" class="muted">{{ $t("remote.notGitRepoRoot") }}</div>
-        <div v-else class="content">
-          <div class="preset-row">
+        <div v-else class="grid gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
             <span class="muted">{{ $t("remote.quickPreset") }}</span>
-            <UiButton type="button" size="sm" variant="secondary" @click="addName = 'origin'">origin</UiButton>
-            <UiButton type="button" size="sm" variant="secondary" @click="addName = 'upstream'">upstream</UiButton>
+            <Button type="button" size="sm" variant="secondary" @click="addName = 'origin'">origin</Button>
+            <Button type="button" size="sm" variant="secondary" @click="addName = 'upstream'">upstream</Button>
           </div>
-          <div class="add-row">
-            <UiInput v-model="addName" :placeholder="$t('remote.namePlaceholder')" />
-            <UiInput v-model="addUrl" :placeholder="$t('remote.urlPlaceholder')" />
-            <UiButton type="button" size="sm" variant="primary" :disabled="loading || !canManage" @click="addRemote">
+          <div class="grid grid-cols-[1fr_2fr_auto] gap-2 items-center">
+            <Input v-model="addName" :placeholder="$t('remote.namePlaceholder')" />
+            <Input v-model="addUrl" :placeholder="$t('remote.urlPlaceholder')" />
+            <Button type="button" size="sm" variant="default" :disabled="loading || !canManage" @click="addRemote">
               {{ $t("remote.add") }}
-            </UiButton>
+            </Button>
           </div>
 
           <div v-if="loading" class="muted">{{ $t("remote.loading") }}</div>
           <div v-else-if="items.length === 0" class="muted">{{ $t("remote.empty") }}</div>
-          <ul v-else class="list">
-            <li v-for="r in items" :key="r.name" class="item">
-              <div class="head">
+          <ul v-else class="list-none m-0 p-0 grid gap-3">
+            <li v-for="r in items" :key="r.name" class="border border-[var(--color-border)] rounded-lg p-3 grid gap-2">
+              <div class="flex justify-between items-center">
                 <strong>{{ r.name }}</strong>
-                <UiButton type="button" size="sm" variant="danger" @click="removeRemote(r.name)">
+                <Button type="button" size="sm" variant="destructive" @click="removeRemote(r.name)">
                   {{ $t("remote.remove") }}
-                </UiButton>
+                </Button>
               </div>
-              <div class="row">
-                <UiInput v-model="renameTo[r.name]" />
-                <UiButton type="button" size="sm" variant="secondary" @click="renameRemote(r.name)">
+              <div class="grid grid-cols-[1fr_auto] gap-2 items-center">
+                <Input v-model="renameTo[r.name]" />
+                <Button type="button" size="sm" variant="secondary" @click="renameRemote(r.name)">
                   {{ $t("remote.rename") }}
-                </UiButton>
+                </Button>
               </div>
-              <div class="row">
-                <UiInput v-model="setFetchUrl[r.name]" :placeholder="$t('remote.fetchUrl')" />
-                <div class="btns">
-                  <UiButton type="button" size="sm" variant="secondary" @click="setUrl(r.name, false)">
+              <div class="grid grid-cols-[1fr_auto] gap-2 items-center">
+                <Input v-model="setFetchUrl[r.name]" :placeholder="$t('remote.fetchUrl')" />
+                <div class="flex gap-2">
+                  <Button type="button" size="sm" variant="secondary" @click="setUrl(r.name, false)">
                     {{ $t("remote.updateFetch") }}
-                  </UiButton>
-                  <UiButton type="button" size="sm" variant="secondary" @click="copyText(r.fetchUrl)">
+                  </Button>
+                  <Button type="button" size="sm" variant="secondary" @click="copyText(r.fetchUrl)">
                     {{ $t("remote.copy") }}
-                  </UiButton>
+                  </Button>
                 </div>
               </div>
-              <div class="row">
-                <UiInput v-model="setPushUrl[r.name]" :placeholder="$t('remote.pushUrl')" />
-                <div class="btns">
-                  <UiButton type="button" size="sm" variant="secondary" @click="setUrl(r.name, true)">
+              <div class="grid grid-cols-[1fr_auto] gap-2 items-center">
+                <Input v-model="setPushUrl[r.name]" :placeholder="$t('remote.pushUrl')" />
+                <div class="flex gap-2">
+                  <Button type="button" size="sm" variant="secondary" @click="setUrl(r.name, true)">
                     {{ $t("remote.updatePush") }}
-                  </UiButton>
-                  <UiButton type="button" size="sm" variant="secondary" @click="copyText(r.pushUrl)">
+                  </Button>
+                  <Button type="button" size="sm" variant="secondary" @click="copyText(r.pushUrl)">
                     {{ $t("remote.copy") }}
-                  </UiButton>
+                  </Button>
                 </div>
               </div>
             </li>
           </ul>
         </div>
-        <div class="actions">
-          <UiButton type="button" size="sm" variant="secondary" @click="emit('close')">
-            {{ $t("workspace.close") }}
-          </UiButton>
-        </div>
       </div>
-    </div>
-  </Teleport>
+      <DialogFooter>
+        <DialogClose as-child>
+          <Button type="button" size="sm" variant="secondary" @click="emit('close')">
+            {{ $t("workspace.close") }}
+          </Button>
+        </DialogClose>
+      </DialogFooter>
+    </DialogContent>
+  </DialogRoot>
 </template>
 
 <style scoped>
-.backdrop { position: fixed; inset: 0; z-index: 12000; display: grid; place-items: center; background: rgb(0 0 0 / 45%); }
-.dialog { width: min(760px, 96vw); max-height: 90vh; overflow: auto; display: grid; gap: 10px; background: #161b29; border: 1px solid var(--color-border); border-radius: 8px; padding: 12px; }
-.content { display: grid; gap: 10px; }
-.preset-row { display: flex; align-items: center; gap: 6px; }
-.add-row, .row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 6px; }
-.row { grid-template-columns: 1fr auto; }
-.btns { display: flex; gap: 6px; }
-.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.item { border: 1px solid var(--color-border); border-radius: 8px; padding: 8px; display: grid; gap: 6px; }
-.head { display: flex; justify-content: space-between; align-items: center; }
-.muted { opacity: 0.7; font-size: 0.85rem; }
-.actions { display: flex; justify-content: flex-end; }
+.muted {
+  opacity: 0.7;
+  font-size: 0.85rem;
+}
 </style>

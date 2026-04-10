@@ -1,13 +1,26 @@
 <script setup lang="ts">
-import { computed, ref, watch, watchEffect } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { invoke } from "@tauri-apps/api/core";
+import { AlertDialogRoot } from "radix-vue";
+import { DialogRoot } from "radix-vue";
 import FolderDropZone from "@/components/FolderDropZone.vue";
 import FolderSelectionDetail from "@/components/workspace/FolderSelectionDetail.vue";
 import RootPathsList from "@/components/workspace/RootPathsList.vue";
 import MoveRootToProjectModal from "@/components/tree/MoveRootToProjectModal.vue";
-import UiSelect from "@/components/ui/UiSelect.vue";
-import UiButton from "@/components/ui/UiButton.vue";
+import Select from "@/components/ui/Select.vue";
+import Button from "@/components/ui/Button.vue";
+import AlertDialogContent from "@/components/ui/AlertDialogContent.vue";
+import AlertDialogHeader from "@/components/ui/AlertDialogHeader.vue";
+import AlertDialogTitle from "@/components/ui/AlertDialogTitle.vue";
+import AlertDialogDescription from "@/components/ui/AlertDialogDescription.vue";
+import AlertDialogFooter from "@/components/ui/AlertDialogFooter.vue";
+import AlertDialogCancel from "@/components/ui/AlertDialogCancel.vue";
+import AlertDialogAction from "@/components/ui/AlertDialogAction.vue";
+import DialogContent from "@/components/ui/DialogContent.vue";
+import DialogHeader from "@/components/ui/DialogHeader.vue";
+import DialogTitle from "@/components/ui/DialogTitle.vue";
+import DialogFooter from "@/components/ui/DialogFooter.vue";
 import { pickDirectories } from "@/composables/pickFolder";
 import {
   lookupFolderRow,
@@ -434,55 +447,6 @@ const moveFolderToProject = async (toProjectId: string) => {
   await syncFromBackend();
 };
 
-watchEffect((onCleanup) => {
-  if (!confirmRemove.value) return;
-  const h = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      confirmRemove.value = false;
-      return;
-    }
-    if (e.key === "Enter") {
-      const t = e.target as HTMLElement;
-      if (t.tagName === "TEXTAREA" || t.tagName === "BUTTON") return;
-      e.preventDefault();
-      void confirmRemoveDo();
-    }
-  };
-  window.addEventListener("keydown", h, true);
-  onCleanup(() => window.removeEventListener("keydown", h, true));
-});
-
-watchEffect((onCleanup) => {
-  if (!confirmGitRemove.value) return;
-  const h = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      confirmGitRemove.value = false;
-      return;
-    }
-    if (e.key === "Enter") {
-      const t = e.target as HTMLElement;
-      if (t.tagName === "TEXTAREA" || t.tagName === "BUTTON") return;
-      e.preventDefault();
-      void doGitRemoveDotGit();
-    }
-  };
-  window.addEventListener("keydown", h, true);
-  onCleanup(() => window.removeEventListener("keydown", h, true));
-});
-
-watchEffect((onCleanup) => {
-  if (!showExternalPicker.value) return;
-  const h = (e: KeyboardEvent) => {
-    if (e.key !== "Escape") return;
-    e.preventDefault();
-    e.stopPropagation();
-    showExternalPicker.value = false;
-  };
-  window.addEventListener("keydown", h, true);
-  onCleanup(() => window.removeEventListener("keydown", h, true));
-});
 </script>
 
 <template>
@@ -533,11 +497,11 @@ watchEffect((onCleanup) => {
     <template v-else>
       <div class="folder-toolbar">
         <div class="toolbar-actions">
-          <UiButton type="button" size="sm" variant="primary" @click="addFolder">
+          <Button type="button" size="sm" variant="default" @click="addFolder">
             <span aria-hidden="true">➕</span>
             {{ $t("workspace.addFolder") }}
-          </UiButton>
-          <UiButton
+          </Button>
+          <Button
             type="button"
             size="sm"
             variant="secondary"
@@ -546,8 +510,8 @@ watchEffect((onCleanup) => {
           >
             <span aria-hidden="true">🔄</span>
             {{ $t("workspace.refreshFolderInfo") }}
-          </UiButton>
-          <UiButton
+          </Button>
+          <Button
             type="button"
             size="sm"
             variant="secondary"
@@ -556,18 +520,18 @@ watchEffect((onCleanup) => {
           >
             <span aria-hidden="true">📦</span>
             {{ $t("workspace.moveFolderToOtherProject") }}
-          </UiButton>
-          <UiButton
+          </Button>
+          <Button
             type="button"
             size="sm"
-            variant="danger"
+            variant="destructive"
             :disabled="!canRemove"
             @click="removeSelected"
           >
             <span aria-hidden="true">🗑️</span>
             {{ $t("workspace.deleteSelected") }}
-          </UiButton>
-          <UiButton
+          </Button>
+          <Button
             type="button"
             size="sm"
             variant="success"
@@ -576,31 +540,31 @@ watchEffect((onCleanup) => {
           >
             <span aria-hidden="true">🌱</span>
             {{ $t("workspace.gitInit") }}
-          </UiButton>
-          <UiButton
+          </Button>
+          <Button
             type="button"
             size="sm"
-            variant="danger"
+            variant="destructive"
             :disabled="!canGitRemoveRepo"
             @click="openGitRemoveConfirm"
           >
             <span aria-hidden="true">⚠️</span>
             {{ $t("workspace.gitRemoveRepo") }}
-          </UiButton>
+          </Button>
         </div>
         <div class="toolbar-filter">
           <label class="filter-label" for="folder-view-mode">{{ $t("workspace.viewModeLabel") }}</label>
-          <UiSelect id="folder-view-mode" v-model="folderViewMode" class="filter-select" size="sm">
+          <Select id="folder-view-mode" v-model="folderViewMode" class="filter-select" size="sm">
             <option value="list">{{ $t("workspace.viewModeList") }}</option>
             <option value="icon">{{ $t("workspace.viewModeIcon") }}</option>
-          </UiSelect>
+          </Select>
           <label class="filter-label" for="folder-filter">{{ $t("workspace.filterLabel") }}</label>
-          <UiSelect id="folder-filter" v-model="filterMode" class="filter-select" size="sm">
+          <Select id="folder-filter" v-model="filterMode" class="filter-select" size="sm">
             <option value="all">{{ $t("workspace.filterAll") }}</option>
             <option value="remote">{{ $t("workspace.filterRemoteConnected") }}</option>
             <option value="git">{{ $t("workspace.filterGitRepo") }}</option>
             <option value="non_git">{{ $t("workspace.filterNotGitRepo") }}</option>
-          </UiSelect>
+          </Select>
           <div class="status-legend" :aria-label="$t('workspace.statusLabel')">
             <span class="legend-badge legend-badge--clean">{{ $t("workspace.statusClean") }}</span>
             <span class="legend-badge legend-badge--dirty">M/U</span>
@@ -645,37 +609,45 @@ watchEffect((onCleanup) => {
       </div>
     </template>
 
-    <div v-if="confirmRemove" class="backdrop modal-backdrop" @click.self="confirmRemove = false">
-      <div class="dialog">
-        <h3>{{ $t("workspace.removeFolderLinkTitle") }}</h3>
-        <p class="msg">
-          {{
-            pathsToRemove.length > 1
-              ? $t("workspace.removeFolderLinksBulkMessage", { count: pathsToRemove.length })
-              : $t("workspace.removeFolderLinkMessage")
-          }}
-        </p>
-        <ul v-if="pathsToRemove.length" class="path-list">
-          <li v-for="rp in pathsToRemove" :key="rp"><code>{{ rp }}</code></li>
-        </ul>
-        <div class="dialog-actions">
-          <UiButton type="button" size="sm" variant="secondary" @click="confirmRemove = false">{{ $t("workspace.cancel") }}</UiButton>
-          <UiButton type="button" size="sm" variant="danger" @click="confirmRemoveDo">{{ $t("workspace.remove") }}</UiButton>
-        </div>
-      </div>
-    </div>
+    <!-- 폴더 링크 제거 확인 AlertDialog -->
+    <AlertDialogRoot :open="confirmRemove" @update:open="(v) => { if (!v) confirmRemove = false }">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ $t("workspace.removeFolderLinkTitle") }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{
+              pathsToRemove.length > 1
+                ? $t("workspace.removeFolderLinksBulkMessage", { count: pathsToRemove.length })
+                : $t("workspace.removeFolderLinkMessage")
+            }}
+          </AlertDialogDescription>
+          <ul v-if="pathsToRemove.length" class="path-list mt-2">
+            <li v-for="rp in pathsToRemove" :key="rp"><code>{{ rp }}</code></li>
+          </ul>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="confirmRemove = false">{{ $t("workspace.cancel") }}</AlertDialogCancel>
+          <AlertDialogAction @click="confirmRemoveDo">{{ $t("workspace.remove") }}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialogRoot>
 
-    <div v-if="confirmGitRemove" class="backdrop modal-backdrop" @click.self="confirmGitRemove = false">
-      <div class="dialog">
-        <h3>{{ $t("workspace.gitRemoveRepoTitle") }}</h3>
-        <p class="msg">{{ $t("workspace.gitRemoveRepoMessage") }}</p>
-        <p v-if="singleSelectedPath" class="path-preview"><code>{{ singleSelectedPath }}</code></p>
-        <div class="dialog-actions">
-          <UiButton type="button" size="sm" variant="secondary" @click="confirmGitRemove = false">{{ $t("workspace.cancel") }}</UiButton>
-          <UiButton type="button" size="sm" variant="danger" @click="doGitRemoveDotGit">{{ $t("workspace.gitRemoveRepoConfirm") }}</UiButton>
-        </div>
-      </div>
-    </div>
+    <!-- Git 저장소 삭제 확인 AlertDialog -->
+    <AlertDialogRoot :open="confirmGitRemove" @update:open="(v) => { if (!v) confirmGitRemove = false }">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ $t("workspace.gitRemoveRepoTitle") }}</AlertDialogTitle>
+          <AlertDialogDescription>{{ $t("workspace.gitRemoveRepoMessage") }}</AlertDialogDescription>
+          <p v-if="singleSelectedPath" class="text-xs text-[var(--muted-foreground)] break-all mt-1">
+            <code>{{ singleSelectedPath }}</code>
+          </p>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="confirmGitRemove = false">{{ $t("workspace.cancel") }}</AlertDialogCancel>
+          <AlertDialogAction @click="doGitRemoveDotGit">{{ $t("workspace.gitRemoveRepoConfirm") }}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialogRoot>
 
     <MoveRootToProjectModal
       v-if="moveModalOpen && project"
@@ -684,27 +656,26 @@ watchEffect((onCleanup) => {
       @submit="moveFolderToProject"
     />
 
-    <div
-      v-if="showExternalPicker"
-      class="backdrop modal-backdrop"
-      @click.self="showExternalPicker = false"
-    >
-      <div class="dialog external-picker-dialog" @click.stop>
-        <h3>{{ $t("workspace.externalOpenPickTitle") }}</h3>
-        <ul class="path-list">
+    <!-- 외부 도구 선택 Dialog -->
+    <DialogRoot :open="showExternalPicker" @update:open="(v) => { if (!v) showExternalPicker = false }">
+      <DialogContent class="max-w-xs">
+        <DialogHeader>
+          <DialogTitle>{{ $t("workspace.externalOpenPickTitle") }}</DialogTitle>
+        </DialogHeader>
+        <ul class="grid gap-2 px-4 py-3">
           <li v-for="tool in usableExternalTools" :key="tool.id">
-            <UiButton type="button" size="sm" variant="secondary" @click="runExternalWithTool(tool)">
+            <Button type="button" size="sm" variant="secondary" class="w-full justify-start" @click="runExternalWithTool(tool)">
               {{ tool.label?.trim() || tool.command }}
-            </UiButton>
+            </Button>
           </li>
         </ul>
-        <div class="dialog-actions">
-          <UiButton type="button" size="sm" variant="secondary" @click="showExternalPicker = false">
+        <DialogFooter>
+          <Button type="button" size="sm" variant="secondary" @click="showExternalPicker = false">
             {{ $t("workspace.cancel") }}
-          </UiButton>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </DialogRoot>
   </div>
 </template>
 
@@ -790,7 +761,7 @@ watchEffect((onCleanup) => {
 }
 
 .empty {
-  color: #9ca3af;
+  color: var(--muted-foreground);
   font-size: 0.9rem;
   line-height: 1.45;
 }
@@ -833,8 +804,8 @@ watchEffect((onCleanup) => {
   border-radius: 6px;
   width: auto;
   min-width: 92px;
-  border: 1px solid var(--color-border);
-  background: #111827;
+  border: 1px solid var(--border);
+  background: var(--background);
   color: inherit;
 }
 
@@ -931,54 +902,9 @@ watchEffect((onCleanup) => {
   margin: 0;
   padding: 8px 0;
   font-size: 0.88rem;
-  color: #9ca3af;
+  color: var(--muted-foreground);
 }
 
-
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgb(0 0 0 / 45%);
-  display: grid;
-  place-items: center;
-  z-index: 10050;
-}
-
-.dialog {
-  width: min(400px, 92vw);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: #111522;
-  padding: 14px;
-  display: grid;
-  gap: 10px;
-}
-
-.dialog h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.msg {
-  margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-.path-preview {
-  margin: 0;
-  word-break: break-all;
-}
-
-.path-preview code {
-  font-size: 0.78rem;
-}
-
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
 
 .path-list {
   margin: 0;

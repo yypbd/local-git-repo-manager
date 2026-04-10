@@ -13,6 +13,7 @@ import MoveRootToProjectModal from "@/components/tree/MoveRootToProjectModal.vue
 import { useProjectsStore, type Project } from "@/stores/projects";
 import { useToastStore } from "@/stores/toast";
 import { folderMoveDropTargetId } from "@/composables/rootFolderProjectPointerMove";
+import Button from "@/components/ui/Button.vue";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -239,7 +240,7 @@ onUnmounted(() => {
       <div class="sidebar">
         <div class="sidebar-head">
           <h2 class="title">{{ $t("workspace.projectsPanel") }}</h2>
-          <UiButton type="button" size="sm" variant="secondary" @click="creating = true">+</UiButton>
+          <Button type="button" size="sm" variant="secondary" @click="creating = true">+</Button>
         </div>
 
         <ProjectListEmpty v-if="!hasProjects" @create="creating = true" />

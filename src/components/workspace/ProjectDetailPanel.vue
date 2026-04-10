@@ -2,6 +2,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { computed, ref, watchEffect } from "vue";
 import { useI18n } from "vue-i18n";
+import { DialogRoot } from "radix-vue";
 import { useToastStore } from "@/stores/toast";
 import type { Project } from "@/stores/projects";
 import {
@@ -13,7 +14,10 @@ import RemoteManagerDialog from "@/components/git/RemoteManagerDialog.vue";
 import ArchiveDialog from "@/components/git/ArchiveDialog.vue";
 import GitignoreEditor from "@/components/git/GitignoreEditor.vue";
 import TemplatePicker from "@/components/git/TemplatePicker.vue";
-import UiButton from "@/components/ui/UiButton.vue";
+import Button from "@/components/ui/Button.vue";
+import DialogContent from "@/components/ui/DialogContent.vue";
+import DialogHeader from "@/components/ui/DialogHeader.vue";
+import DialogTitle from "@/components/ui/DialogTitle.vue";
 
 const props = defineProps<{
   project: Project | undefined;
@@ -112,7 +116,7 @@ const syncTemplateInModal = async () => {
     <template v-else>
       <div class="actions-footer">
         <div class="action-row action-row--secondary">
-          <UiButton
+          <Button
             type="button"
             size="sm"
             variant="secondary"
@@ -121,8 +125,8 @@ const syncTemplateInModal = async () => {
           >
             <span aria-hidden="true">🌐</span>
             {{ $t("workspace.actionRemoteManager") }}
-          </UiButton>
-          <UiButton
+          </Button>
+          <Button
             type="button"
             size="sm"
             variant="secondary"
@@ -131,8 +135,8 @@ const syncTemplateInModal = async () => {
           >
             <span aria-hidden="true">🗜️</span>
             {{ $t("workspace.actionArchive") }}
-          </UiButton>
-          <UiButton
+          </Button>
+          <Button
             type="button"
             size="sm"
             variant="secondary"
@@ -141,38 +145,33 @@ const syncTemplateInModal = async () => {
           >
             <span aria-hidden="true">✍️</span>
             {{ $t("workspace.editGitignore") }}
-          </UiButton>
+          </Button>
         </div>
       </div>
     </template>
 
-    <div
-      v-if="showGitignoreModal"
-      class="backdrop modal-backdrop"
-      @click.self="showGitignoreModal = false"
-    >
-      <div class="gitignore-dialog unified" @click.stop>
-        <h3 class="dialog-title">{{ $t("workspace.editGitignore") }}</h3>
-        <TemplatePicker
-          compact
-          :items="templates"
-          :syncing="templateSyncing"
-          @apply="applyTemplateInModal"
-          @sync="() => void syncTemplateInModal()"
-        />
-        <GitignoreEditor
-          hide-heading
-          :content="gitignoreModalContent"
-          @save="saveGitignoreModal"
-          @cancel="showGitignoreModal = false"
-        />
-        <div class="dialog-actions">
-          <UiButton type="button" size="sm" variant="secondary" @click="showGitignoreModal = false">
-            {{ $t("workspace.close") }}
-          </UiButton>
+    <DialogRoot :open="showGitignoreModal" @update:open="(v) => { if (!v) showGitignoreModal = false }">
+      <DialogContent class="w-[min(720px,96vw)] max-h-[min(90vh,720px)] max-w-none flex flex-col">
+        <DialogHeader>
+          <DialogTitle>{{ $t("workspace.editGitignore") }}</DialogTitle>
+        </DialogHeader>
+        <div class="min-h-0 flex-1 overflow-auto px-4 py-3 grid gap-3">
+          <TemplatePicker
+            compact
+            :items="templates"
+            :syncing="templateSyncing"
+            @apply="applyTemplateInModal"
+            @sync="() => void syncTemplateInModal()"
+          />
+          <GitignoreEditor
+            hide-heading
+            :content="gitignoreModalContent"
+            @save="saveGitignoreModal"
+            @cancel="showGitignoreModal = false"
+          />
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </DialogRoot>
 
     <RemoteManagerDialog
       v-if="showRemote"
@@ -201,7 +200,7 @@ const syncTemplateInModal = async () => {
 }
 
 .empty {
-  color: #9ca3af;
+  color: var(--muted-foreground);
   font-size: 0.9rem;
   line-height: 1.45;
 }
@@ -230,72 +229,4 @@ const syncTemplateInModal = async () => {
   border-top: 1px solid rgb(255 255 255 / 5%);
 }
 
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgb(0 0 0 / 45%);
-  display: grid;
-  place-items: center;
-  z-index: 10050;
-  padding: 16px;
-}
-
-.gitignore-dialog.unified {
-  width: min(720px, 96vw);
-  max-height: min(90vh, 720px);
-  overflow: auto;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: #111522;
-  padding: 14px;
-  display: grid;
-  gap: 12px;
-}
-
-.dialog-title {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 4px;
-}
-
-.external-picker-dialog {
-  width: min(400px, 92vw);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: #111522;
-  padding: 14px;
-  display: grid;
-  gap: 12px;
-}
-
-.external-tool-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 6px;
-}
-
-.btn-tool {
-  width: 100%;
-  text-align: left;
-  padding: 8px 10px;
-  font-size: 0.85rem;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: rgb(255 255 255 / 6%);
-  color: inherit;
-  cursor: pointer;
-}
-
-.btn-tool:hover {
-  background: rgb(255 255 255 / 10%);
-}
 </style>

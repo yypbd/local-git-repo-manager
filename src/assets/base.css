@@ -1,4 +1,10 @@
+/* Tailwind layers — placed before any custom CSS so utilities can override. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
+  /* ── 기존 디자인 토큰 ──────────────────────────────────────────── */
   --color-bg: #0f1117;
   --color-text: #e5e7eb;
   --color-border: #2f3542;
@@ -17,6 +23,32 @@
   --btn-font-sm: 12px;
   --btn-font-md: 13px;
   --btn-gap: 6px;
+  /* Accent colour — must be declared here before tailwind.config.js references it */
+  --color-accent: #60a5fa;
+
+  /* ── shadcn 시맨틱 색상 변수 (dark-only) ──────────────────────── */
+  --background: #0d1018;
+  --foreground: #e5e7eb;
+  --primary: #5b7cff;
+  --primary-foreground: #ffffff;
+  --secondary: #1a2029;
+  --secondary-foreground: #e5e7eb;
+  --muted: #1b2233;
+  --muted-foreground: #9ca3af;
+  --accent: #60a5fa;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #2f3542;
+  --input: #1b2233;
+  --ring: #5b7cff;
+  --radius: 4px;
+
+  /* ── Z-인덱스 스케일 ──────────────────────────────────────────── */
+  --z-toast: 50;
+  --z-modal: 10050;
+  --z-modal-nested: 10060;
+  --z-dialog-top: 20000;
 }
 
 * {
@@ -50,17 +82,7 @@ pre {
   -webkit-user-select: text;
 }
 
-button {
-  cursor: pointer;
-  border: 1px solid var(--color-border);
-  background: #1b2233;
-  color: var(--color-text);
-  border-radius: var(--radius-sm);
-  padding: 0 10px;
-  min-height: var(--btn-height-md);
-  font-size: var(--btn-font-md);
-  line-height: 1;
-}
+/* global button {} rule 제거 — .btn @layer components 가 대체함 (Phase 2) */
 
 .ui-control {
   width: 100%;
@@ -97,68 +119,70 @@ button {
   resize: vertical;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--btn-gap);
-  min-height: var(--btn-height-md);
-  padding: 0 10px;
-  border-radius: var(--radius-sm);
-  font-size: var(--btn-font-md);
-  line-height: 1;
-  border: 1px solid var(--color-border);
-  background: #1b2233;
-  color: var(--color-text);
-}
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--btn-gap);
+    min-height: var(--btn-height-md);
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    font-size: var(--btn-font-md);
+    line-height: 1;
+    border: 1px solid var(--color-border);
+    background: #1b2233;
+    color: var(--color-text);
+  }
 
-.btn-sm {
-  min-height: var(--btn-height-sm);
-  padding: 0 8px;
-  font-size: var(--btn-font-sm);
-}
+  .btn-sm {
+    min-height: var(--btn-height-sm);
+    padding: 0 8px;
+    font-size: var(--btn-font-sm);
+  }
 
-.btn-primary {
-  border-color: #3b4f7a;
-  background: #1e2a42;
-}
+  .btn-primary {
+    border-color: #3b4f7a;
+    background: #1e2a42;
+  }
 
-.btn-primary:hover:not(:disabled) {
-  background: #253350;
-}
+  .btn-primary:hover:not(:disabled) {
+    background: #253350;
+  }
 
-.btn-secondary {
-  border-color: #4a5568;
-  background: #1a2029;
-}
+  .btn-secondary {
+    border-color: #4a5568;
+    background: #1a2029;
+  }
 
-.btn-secondary:hover:not(:disabled) {
-  background: #242d3a;
-}
+  .btn-secondary:hover:not(:disabled) {
+    background: #242d3a;
+  }
 
-.btn-danger {
-  border-color: #7f1d1d;
-  background: #3f1212;
-}
+  .btn-danger {
+    border-color: #7f1d1d;
+    background: #3f1212;
+  }
 
-.btn-danger:hover:not(:disabled) {
-  background: #5c1a1a;
-}
+  .btn-danger:hover:not(:disabled) {
+    background: #5c1a1a;
+  }
 
-.btn-success {
-  border-color: #3d5a45;
-  background: #15251a;
-}
+  .btn-success {
+    border-color: #3d5a45;
+    background: #15251a;
+  }
 
-.btn-success:hover:not(:disabled) {
-  background: #1a3024;
-}
+  .btn-success:hover:not(:disabled) {
+    background: #1a3024;
+  }
 
-.btn-disabled-soft:disabled,
-.btn:disabled,
-button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+  .btn-disabled-soft:disabled,
+  .btn:disabled,
+  button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 }
 
 /** 모달 백드롭: 전체 덮음 + 다른 패널 호버/클릭이 비치지 않도록 */

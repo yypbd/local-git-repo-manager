@@ -83,6 +83,6 @@ withDefaults(
 .tree-dir .tree-nodes {
   padding-left: 12px;
   margin-top: 2px;
-  border-left: 1px solid var(--color-border, #2d3748);
+  border-left: 1px solid var(--border);
 }
 </style>
