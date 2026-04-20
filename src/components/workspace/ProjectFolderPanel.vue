@@ -1042,10 +1042,10 @@ const syncTemplateInModal = async () => {
 }
 
 .folder-detail-pane {
-  flex: 0 0 280px;
+  flex: 0 0 260px;
   width: 100%;
   min-height: 0;
-  max-height: 280px;
+  max-height: 230px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
