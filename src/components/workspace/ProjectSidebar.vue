@@ -135,6 +135,35 @@ function onReorderPointerDown(e: PointerEvent, project: Project) {
   window.addEventListener("pointercancel", onEnd);
 }
 
+function getReorderVisualClass(projectId: string) {
+  const sourceId = dragSourceId.value;
+  const overId = dragOverId.value;
+  if (!sourceId || !overId) return {};
+  if (sourceId === overId) {
+    return {
+      "is-drag-source": projectId === sourceId,
+    };
+  }
+
+  const ids = projects.value.map((p) => p.id);
+  const sourceIdx = ids.indexOf(sourceId);
+  const overIdx = ids.indexOf(overId);
+  const idx = ids.indexOf(projectId);
+  if (sourceIdx < 0 || overIdx < 0 || idx < 0) return {};
+
+  const movingDown = sourceIdx < overIdx;
+  const inShiftRange = movingDown
+    ? idx > sourceIdx && idx <= overIdx
+    : idx >= overIdx && idx < sourceIdx;
+
+  return {
+    "is-drag-source": projectId === sourceId,
+    "is-drag-target": projectId === overId,
+    "shift-up": inShiftRange && movingDown,
+    "shift-down": inShiftRange && !movingDown,
+  };
+}
+
 function openDelete(p: Project) {
   deleting.value = p;
   deleteStep.value = "dialog";
@@ -254,6 +283,7 @@ onUnmounted(() => {
             :class="{
               'drag-over': dragOverId === p.id && dragSourceId && dragSourceId !== p.id,
               'root-folder-drop-over': folderMoveDropTargetId === p.id,
+              ...getReorderVisualClass(p.id),
             }"
           >
             <ProjectListItem
@@ -330,13 +360,57 @@ onUnmounted(() => {
   gap: 8px;
 }
 
+.list:has(.project-row.is-drag-source) {
+  user-select: none;
+  cursor: grabbing;
+}
+
 .project-row {
+  position: relative;
   border-radius: 10px;
-  transition: box-shadow 0.12s ease;
+  transition: box-shadow 0.12s ease, transform 0.14s ease, opacity 0.14s ease;
+  will-change: transform;
+}
+
+.project-row.is-drag-source {
+  opacity: 0.72;
+  transform: scale(0.985);
+}
+
+.project-row.shift-up {
+  transform: translateY(-10px);
+}
+
+.project-row.shift-down {
+  transform: translateY(10px);
 }
 
 .project-row.drag-over {
   box-shadow: 0 0 0 2px rgba(122, 162, 255, 0.55);
+}
+
+.project-row.is-drag-target::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: -5px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(122, 162, 255, 0.95);
+  box-shadow: 0 0 0 1px rgba(122, 162, 255, 0.35);
+  animation: reorder-target-pulse 0.75s ease-in-out infinite alternate;
+}
+
+@keyframes reorder-target-pulse {
+  from {
+    opacity: 0.7;
+    transform: scaleX(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
 }
 
 .project-row.root-folder-drop-over {
