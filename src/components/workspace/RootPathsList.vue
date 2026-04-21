@@ -83,6 +83,43 @@ function folderRowAccentState(path: string): "non-git" | "no-remote" | undefined
   return undefined;
 }
 
+/** listbox option용 스크린 리더 요약 (FOLDER-STATUS-05) */
+function folderRowAriaLabel(path: string): string {
+  const name = folderNameFromPath(path);
+  if (rowMetaPending(path)) {
+    return t("workspace.folderRowAriaLoading", { name });
+  }
+  const row = rowByPath.value[path];
+  if (!row) {
+    return t("workspace.folderRowAriaUnknown", { name, path });
+  }
+  if (row.gitError) {
+    return t("workspace.folderRowAriaNotGit", { name, path });
+  }
+  const branch = row.branch?.trim() || "—";
+  let statusSentence: string;
+  if (row.clean) {
+    statusSentence = t("workspace.folderRowAriaWorktreeClean");
+  } else {
+    const m = row.trackedChanges;
+    const n = row.untrackedFiles;
+    if (m > 0 && n > 0) statusSentence = t("workspace.statusDirtyBoth", { m, n });
+    else if (m > 0) statusSentence = t("workspace.statusDirtyTrackedOnly", { m });
+    else if (n > 0) statusSentence = t("workspace.statusDirtyUntrackedOnly", { n });
+    else statusSentence = t("workspace.statusHasChangesLabel");
+  }
+  const remoteSentence = row.remote?.trim()
+    ? t("workspace.folderRowAriaRemoteConnected")
+    : t("workspace.remoteNoOrigin");
+  return t("workspace.folderRowAriaGit", {
+    name,
+    path,
+    branch,
+    statusSentence,
+    remoteSentence,
+  });
+}
+
 function isRowSelected(path: string): boolean {
   return props.selectedPaths.length > 0
     ? props.selectedPaths.includes(path)
@@ -148,6 +185,7 @@ function onRowClick(path: string, e: MouseEvent) {
       v-for="path in props.paths"
       :key="path"
       role="option"
+      :aria-label="folderRowAriaLabel(path)"
       :aria-selected="isRowSelected(path)"
       class="root-row"
       :data-state="folderRowAccentState(path)"
@@ -159,7 +197,7 @@ function onRowClick(path: string, e: MouseEvent) {
       @pointerdown="onFolderPointerDown($event, path)"
       @click="onRowClick(path, $event)"
     >
-      <div v-if="viewMode === 'list'" class="row">
+      <div v-if="viewMode === 'list'" class="row" aria-hidden="true">
         <!-- 1행: 폴더명 + 브랜치/상태 -->
         <div class="row-main">
           <span class="name">{{ folderNameFromPath(path) }}</span>
@@ -170,9 +208,7 @@ function onRowClick(path: string, e: MouseEvent) {
             <span class="status">
               <template v-if="rowMetaPending(path)">…</template>
               <template v-else-if="!rowByPath[path]">—</template>
-              <template v-else-if="rowByPath[path]!.gitError">
-                <span class="status-tag status-tag--non-git">{{ $t("workspace.notGitRepo") }}</span>
-              </template>
+              <template v-else-if="rowByPath[path]!.gitError" />
               <template v-else-if="rowByPath[path]!.clean">
                 <span class="status-tag status-tag--clean">{{ $t("workspace.statusClean") }}</span>
               </template>
@@ -204,12 +240,12 @@ function onRowClick(path: string, e: MouseEvent) {
           >{{ $t("workspace.remoteNoOrigin") }}</span>
         </div>
       </div>
-      <div v-else class="icon-card">
+      <div v-else class="icon-card" aria-hidden="true">
         <div class="folder-emoji" aria-hidden="true">📁</div>
         <span class="name name--icon">{{ folderNameFromPath(path) }}</span>
         <code class="path-mini">{{ path }}</code>
         <span v-if="rowMetaPending(path)" class="mini muted">…</span>
-        <span v-else-if="rowByPath[path]?.gitError" class="mini muted">{{ $t("workspace.notGitRepo") }}</span>
+        <template v-else-if="rowByPath[path]?.gitError" />
         <template v-else>
           <span
             v-if="showRemoteMissingBadge(path)"
@@ -403,15 +439,9 @@ function onRowClick(path: string, e: MouseEvent) {
 }
 
 .status-tag--clean {
-  color: #86efac;
-  border-color: rgb(34 197 94 / 35%);
-  background: rgb(34 197 94 / 14%);
-}
-
-.status-tag--non-git {
-  color: #cbd5e1;
-  border-color: rgb(148 163 184 / 35%);
-  background: rgb(148 163 184 / 14%);
+  color: var(--folder-status-clean-fg);
+  border-color: var(--folder-status-clean-border);
+  background: var(--folder-status-clean-bg);
 }
 
 .icon-card-status {

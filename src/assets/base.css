@@ -26,6 +26,18 @@
   /* Accent colour — must be declared here before tailwind.config.js references it */
   --color-accent: #60a5fa;
 
+  /* 폴더 목록 배지·필터 범례 공통 (RootPathsList / WorkingTreeStatusLabel / ProjectFolderPanel) */
+  --folder-status-clean-fg: #86efac;
+  --folder-status-clean-border: rgb(34 197 94 / 35%);
+  --folder-status-clean-bg: rgb(34 197 94 / 14%);
+  --folder-status-tracked-fg: #fcd34d;
+  --folder-status-tracked-border: rgb(251 191 36 / 48%);
+  --folder-status-tracked-bg: rgb(251 191 36 / 20%);
+  --folder-status-untracked-fg: #7dd3fc;
+  --folder-status-untracked-border: rgb(56 189 248 / 48%);
+  --folder-status-untracked-bg: rgb(56 189 248 / 18%);
+  --folder-status-changes-prefix-fg: #fbbf24;
+
   /* ── shadcn 시맨틱 색상 변수 (dark-only) ──────────────────────── */
   --background: #0d1018;
   --foreground: #e5e7eb;
