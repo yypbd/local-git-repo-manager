@@ -269,6 +269,24 @@ fn projects_add_root(
 }
 
 #[tauri::command]
+fn projects_git_clone(
+    project_id: String,
+    remote_url: String,
+    local_path: String,
+    state: tauri::State<AppState>,
+) -> Result<Project, String> {
+    let git_exe = {
+        let settings = state
+            .settings
+            .lock()
+            .map_err(|_| "failed to lock settings".to_string())?;
+        settings.git_executable_path.clone()
+    };
+    let repo_root = git_ops::git_clone_resolved(&remote_url, &local_path, git_exe.as_deref())?;
+    projects_add_root(project_id, repo_root, state)
+}
+
+#[tauri::command]
 fn projects_import_folder_drop(path: String, state: tauri::State<AppState>) -> Result<Project, String> {
     const ERR_OTHER_PROJECT: &str = "root path already exists in another project";
 
@@ -900,6 +918,7 @@ pub fn run() {
     }
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(move |app| {
             app.manage(AppState {
@@ -918,6 +937,7 @@ pub fn run() {
             projects_delete,
             projects_reorder,
             projects_add_root,
+            projects_git_clone,
             projects_import_folder_drop,
             projects_remove_root,
             move_root_to_project,

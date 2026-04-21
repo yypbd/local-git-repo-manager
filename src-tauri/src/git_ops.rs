@@ -213,3 +213,114 @@ pub fn git_archive_export_zip(
 
     Ok(out_display)
 }
+
+fn repo_dir_name_from_url(url: &str) -> String {
+    let t = url.trim();
+    if t.is_empty() {
+        return "repo".to_string();
+    }
+    let no_query = t.split(|c| c == '?' || c == '#').next().unwrap_or(t);
+    let without_git = no_query.trim_end_matches(".git").trim_end_matches(".GIT");
+    let last = without_git
+        .split(|c| c == '/' || c == ':')
+        .filter(|s| !s.is_empty())
+        .last()
+        .unwrap_or("repo");
+    if last.is_empty() {
+        "repo".to_string()
+    } else {
+        last.chars().take(120).collect()
+    }
+}
+
+fn git_clone_output_error(out: &std::process::Output) -> String {
+    let err = String::from_utf8_lossy(&out.stderr);
+    let msg = err.trim();
+    if !msg.is_empty() {
+        return msg.to_string();
+    }
+    let so = String::from_utf8_lossy(&out.stdout);
+    let msg = so.trim();
+    if msg.is_empty() {
+        "git clone failed".to_string()
+    } else {
+        msg.to_string()
+    }
+}
+
+/// 클론이 끝난 뒤 **저장소 루트**의 정규화된 경로를 반환합니다.
+/// - `local_path`가 **이미 있는 디렉터리**면: 그 안에 URL에서 유추한 하위 폴더로 클론합니다.
+/// - `local_path`가 **아직 없으면**: 부모가 있어야 하며, 그 이름의 새 폴더를 만들어 클론합니다.
+pub fn git_clone_resolved(
+    remote_url: &str,
+    local_path: &str,
+    git_executable: Option<&str>,
+) -> Result<String, String> {
+    let trimmed_url = remote_url.trim();
+    if trimmed_url.is_empty() {
+        return Err("remote URL cannot be empty".to_string());
+    }
+    let trimmed_dest = local_path.trim();
+    if trimmed_dest.is_empty() {
+        return Err("destination path cannot be empty".to_string());
+    }
+    if paths::is_network_path(trimmed_dest) {
+        return Err("network path is not allowed".to_string());
+    }
+    let normalized = paths::normalize_path_for_compare(trimmed_dest)?;
+    if paths::is_network_path(&normalized) {
+        return Err("network path is not allowed".to_string());
+    }
+    let dest = Path::new(&normalized);
+    let git = git_executable_or_default(git_executable);
+
+    if dest.exists() {
+        if !dest.is_dir() {
+            return Err("path exists and is not a directory".to_string());
+        }
+        let child_name = repo_dir_name_from_url(trimmed_url);
+        if child_name.is_empty() {
+            return Err("could not infer folder name from URL".to_string());
+        }
+        let child = dest.join(&child_name);
+        if child.exists() {
+            return Err("destination already exists".to_string());
+        }
+        let out = Command::new(git)
+            .current_dir(dest)
+            .args(["clone", trimmed_url, child_name.as_str()])
+            .output()
+            .map_err(|e| format!("failed to run git clone: {e}"))?;
+        if !out.status.success() {
+            return Err(git_clone_output_error(&out));
+        }
+        let s = child
+            .to_str()
+            .ok_or_else(|| "invalid path".to_string())?;
+        return paths::normalize_path_for_compare(s);
+    }
+
+    let parent = dest
+        .parent()
+        .ok_or_else(|| "invalid destination path".to_string())?;
+    if !parent.is_dir() {
+        return Err("parent directory does not exist".to_string());
+    }
+
+    let out = Command::new(git)
+        .arg("clone")
+        .arg(trimmed_url)
+        .arg(&normalized)
+        .output()
+        .map_err(|e| format!("failed to run git clone: {e}"))?;
+
+    if !out.status.success() {
+        return Err(git_clone_output_error(&out));
+    }
+
+    paths::normalize_path_for_compare(
+        dest
+            .to_str()
+            .ok_or_else(|| "invalid path".to_string())?,
+    )
+}

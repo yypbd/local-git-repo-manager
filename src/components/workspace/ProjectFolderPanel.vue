@@ -7,6 +7,7 @@ import { DialogRoot } from "radix-vue";
 import FolderDropZone from "@/components/FolderDropZone.vue";
 import FolderSelectionDetail from "@/components/workspace/FolderSelectionDetail.vue";
 import RootPathsList from "@/components/workspace/RootPathsList.vue";
+import CloneRepoDialog from "@/components/workspace/CloneRepoDialog.vue";
 import MoveRootToProjectModal from "@/components/tree/MoveRootToProjectModal.vue";
 import RemoteManagerDialog from "@/components/git/RemoteManagerDialog.vue";
 import ArchiveDialog from "@/components/git/ArchiveDialog.vue";
@@ -35,6 +36,8 @@ import { useProjectsStore } from "@/stores/projects";
 import { useToastStore } from "@/stores/toast";
 import type { Project } from "@/stores/projects";
 import { repoPathArgs } from "@/utils/tauriRepoPath";
+import { readClipboardText } from "@/composables/readClipboardText";
+import { looksLikeGitRemoteUrl } from "@/utils/gitRemoteClipboard";
 
 const props = withDefaults(
   defineProps<{
@@ -81,6 +84,23 @@ const reload = () => props.reload();
 const confirmRemove = ref(false);
 const confirmGitRemove = ref(false);
 const moveModalOpen = ref(false);
+const cloneDialogOpen = ref(false);
+/** 복제 다이얼로그 열 때 클립보드에서 채울 URL (Git 원격으로 보일 때만) */
+const cloneInitialRemoteUrl = ref<string | undefined>(undefined);
+
+const openCloneDialog = async () => {
+  cloneInitialRemoteUrl.value = undefined;
+  const clip = await readClipboardText();
+  if (looksLikeGitRemoteUrl(clip)) {
+    cloneInitialRemoteUrl.value = clip.trim();
+  }
+  cloneDialogOpen.value = true;
+};
+
+const onCloneDialogClose = () => {
+  cloneDialogOpen.value = false;
+  cloneInitialRemoteUrl.value = undefined;
+};
 
 const hasOtherProjects = computed(() => {
   if (!props.project) return false;
@@ -347,6 +367,11 @@ const revealPath = async () => {
 const addFolder = async () => {
   const paths = await pickDirectories();
   if (paths.length) emit("dropped", paths);
+};
+
+const onCloneDone = async () => {
+  await syncFromBackend();
+  await props.reload();
 };
 
 const removeSelected = () => {
@@ -616,6 +641,10 @@ const syncTemplateInModal = async () => {
               <span aria-hidden="true">🔄</span>
               {{ $t("workspace.refreshFolderInfo") }}
             </Button>
+            <Button type="button" size="sm" variant="secondary" @click="openCloneDialog">
+              <span aria-hidden="true">📥</span>
+              {{ $t("workspace.cloneRepo") }}
+            </Button>
 
             <div class="toolbar-divider" aria-hidden="true" />
 
@@ -751,6 +780,16 @@ const syncTemplateInModal = async () => {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialogRoot>
+
+    <CloneRepoDialog
+      v-if="cloneDialogOpen && project"
+      :project-id="project.id"
+      :first-root-path="project.rootPaths[0]"
+      :selected-folder-path="selectedFolderPath"
+      :initial-remote-url="cloneInitialRemoteUrl"
+      @close="onCloneDialogClose"
+      @done="onCloneDone"
+    />
 
     <MoveRootToProjectModal
       v-if="moveModalOpen && project"
