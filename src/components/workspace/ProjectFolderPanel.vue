@@ -597,68 +597,74 @@ const syncTemplateInModal = async () => {
     </div>
 
     <template v-else>
-      <div class="folder-toolbar">
-        <div class="toolbar-actions">
-          <!-- 그룹 1: 목록 전체 -->
-          <Button type="button" size="sm" variant="default" @click="addFolder">
-            <span aria-hidden="true">➕</span>
-            {{ $t("workspace.addFolder") }}
-          </Button>
+      <!-- 한 줄: 좌측 액션 버튼 · 우측 표시·필터·정렬 (좁으면 줄바꿈, 필터는 우측 정렬 유지) -->
+      <div class="folder-top-bar">
+        <div class="folder-toolbar">
+          <div class="toolbar-actions">
+            <!-- 그룹 1: 목록 전체 -->
+            <Button type="button" size="sm" variant="default" @click="addFolder">
+              <span aria-hidden="true">➕</span>
+              {{ $t("workspace.addFolder") }}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              :disabled="!project.rootPaths.length || loading"
+              @click="reload()"
+            >
+              <span aria-hidden="true">🔄</span>
+              {{ $t("workspace.refreshFolderInfo") }}
+            </Button>
+
+            <div class="toolbar-divider" aria-hidden="true" />
+
+            <!-- 그룹 2: 멀티 선택 가능 -->
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              :disabled="!canRemove"
+              @click="removeSelected"
+            >
+              <span aria-hidden="true">🗑️</span>
+              {{ $t("workspace.deleteSelected") }}
+            </Button>
+          </div>
+        </div>
+
+        <div
+          class="folder-filter-bar"
+          role="group"
+          :aria-label="$t('workspace.folderFilterBarGroup')"
+        >
+          <label class="filter-label" for="folder-view-mode">{{ $t("workspace.viewModeLabel") }}</label>
+          <Select id="folder-view-mode" v-model="folderViewMode" class="filter-select" size="sm">
+            <option value="list">{{ $t("workspace.viewModeList") }}</option>
+            <option value="icon">{{ $t("workspace.viewModeIcon") }}</option>
+          </Select>
+          <label class="filter-label" for="folder-filter">{{ $t("workspace.filterLabel") }}</label>
+          <Select id="folder-filter" v-model="filterMode" class="filter-select" size="sm">
+            <option value="all">{{ $t("workspace.filterAll") }}</option>
+            <option value="remote">{{ $t("workspace.filterRemoteConnected") }}</option>
+            <option value="git">{{ $t("workspace.filterGitRepo") }}</option>
+            <option value="non_git">{{ $t("workspace.filterNotGitRepo") }}</option>
+          </Select>
+          <label class="filter-label" for="folder-sort">{{ $t("workspace.sortLabel") }}</label>
+          <Select id="folder-sort" v-model="sortMode" class="filter-select" size="sm">
+            <option value="name">{{ $t("workspace.sortByName") }}</option>
+            <option value="path">{{ $t("workspace.sortByPath") }}</option>
+            <option value="status">{{ $t("workspace.sortByStatus") }}</option>
+          </Select>
           <Button
             type="button"
             size="sm"
             variant="secondary"
-            :disabled="!project.rootPaths.length || loading"
-            @click="reload()"
-          >
-            <span aria-hidden="true">🔄</span>
-            {{ $t("workspace.refreshFolderInfo") }}
-          </Button>
-
-          <div class="toolbar-divider" aria-hidden="true" />
-
-          <!-- 그룹 2: 멀티 선택 가능 -->
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            :disabled="!canRemove"
-            @click="removeSelected"
-          >
-            <span aria-hidden="true">🗑️</span>
-            {{ $t("workspace.deleteSelected") }}
-          </Button>
+            class="sort-dir-btn"
+            :aria-label="sortDir === 'asc' ? '오름차순' : '내림차순'"
+            @click="sortDir = sortDir === 'asc' ? 'desc' : 'asc'"
+          >{{ sortDir === "asc" ? "↑" : "↓" }}</Button>
         </div>
-      </div>
-
-      <!-- 필터 행: 툴바와 목록 사이 전용 행 -->
-      <div class="folder-filter-bar">
-        <label class="filter-label" for="folder-view-mode">{{ $t("workspace.viewModeLabel") }}</label>
-        <Select id="folder-view-mode" v-model="folderViewMode" class="filter-select" size="sm">
-          <option value="list">{{ $t("workspace.viewModeList") }}</option>
-          <option value="icon">{{ $t("workspace.viewModeIcon") }}</option>
-        </Select>
-        <label class="filter-label" for="folder-filter">{{ $t("workspace.filterLabel") }}</label>
-        <Select id="folder-filter" v-model="filterMode" class="filter-select" size="sm">
-          <option value="all">{{ $t("workspace.filterAll") }}</option>
-          <option value="remote">{{ $t("workspace.filterRemoteConnected") }}</option>
-          <option value="git">{{ $t("workspace.filterGitRepo") }}</option>
-          <option value="non_git">{{ $t("workspace.filterNotGitRepo") }}</option>
-        </Select>
-        <label class="filter-label" for="folder-sort">{{ $t("workspace.sortLabel") }}</label>
-        <Select id="folder-sort" v-model="sortMode" class="filter-select" size="sm">
-          <option value="name">{{ $t("workspace.sortByName") }}</option>
-          <option value="path">{{ $t("workspace.sortByPath") }}</option>
-          <option value="status">{{ $t("workspace.sortByStatus") }}</option>
-        </Select>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          class="sort-dir-btn"
-          :aria-label="sortDir === 'asc' ? '오름차순' : '내림차순'"
-          @click="sortDir = sortDir === 'asc' ? 'desc' : 'asc'"
-        >{{ sortDir === "asc" ? "↑" : "↓" }}</Button>
       </div>
 
       <div class="folder-body">
@@ -902,25 +908,36 @@ const syncTemplateInModal = async () => {
   line-height: 1.45;
 }
 
-.folder-toolbar {
+.folder-top-bar {
   flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 2px 0 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.folder-toolbar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 4px;
-  padding: 2px 0 6px;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .folder-filter-bar {
-  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  padding: 4px 0;
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 4px;
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  margin-left: auto;
+  min-width: 0;
 }
 
 .toolbar-actions {

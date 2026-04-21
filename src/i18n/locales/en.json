@@ -78,6 +78,7 @@
   "workspace.sortByName": "Name",
   "workspace.sortByPath": "Path",
   "workspace.sortByStatus": "Status",
+  "workspace.folderFilterBarGroup": "Folder list view, filter, and sort",
   "workspace.viewModeLabel": "View",
   "workspace.viewModeList": "List",
   "workspace.viewModeIcon": "Icons",
