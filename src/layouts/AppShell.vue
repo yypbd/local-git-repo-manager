@@ -4,13 +4,14 @@ import SettingsDialog from "@/components/settings/SettingsDialog.vue";
 import Button from "@/components/ui/Button.vue";
 
 const showSettings = ref(false);
+const appIconSrc = new URL("../../src-tauri/icons/32x32.png", import.meta.url).href;
 </script>
 
 <template>
   <div class="shell">
     <header class="toolbar">
       <strong class="brand">
-        <span class="ico" aria-hidden="true">🗂️</span>
+        <img class="app-icon" :src="appIconSrc" alt="" aria-hidden="true" />
         {{ $t("app.title") }}
       </strong>
       <div class="toolbar-actions">
@@ -74,6 +75,13 @@ const showSettings = ref(false);
 .ico {
   line-height: 1;
   font-size: 0.9em;
+}
+
+.app-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: contain;
 }
 
 .full-bleed {

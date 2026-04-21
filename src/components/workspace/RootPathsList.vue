@@ -61,6 +61,28 @@ function rowMetaPending(path: string): boolean {
   return props.loading && rowByPath.value[path] === undefined;
 }
 
+/** `folder_root_row` 조회 완료 후 `gitError`인 경우만 — 행 단위 비Git 시각 구분용 */
+function isNonGitFolder(path: string): boolean {
+  if (rowMetaPending(path)) return false;
+  const row = rowByPath.value[path];
+  return Boolean(row?.gitError);
+}
+
+/** Git 저장소로 확인됐으나 origin(대표 remote) URL 없음 — 행 왼쪽 강조·경로 아래 보조 문구용 */
+function showRemoteMissingBadge(path: string): boolean {
+  if (rowMetaPending(path)) return false;
+  const row = rowByPath.value[path];
+  if (!row || row.gitError) return false;
+  return !row.remote?.trim();
+}
+
+/** 행 왼쪽 색상 바: 비Git 우선, 그다음 원격 없음 */
+function folderRowAccentState(path: string): "non-git" | "no-remote" | undefined {
+  if (isNonGitFolder(path)) return "non-git";
+  if (showRemoteMissingBadge(path)) return "no-remote";
+  return undefined;
+}
+
 function isRowSelected(path: string): boolean {
   return props.selectedPaths.length > 0
     ? props.selectedPaths.includes(path)
@@ -128,6 +150,7 @@ function onRowClick(path: string, e: MouseEvent) {
       role="option"
       :aria-selected="isRowSelected(path)"
       class="root-row"
+      :data-state="folderRowAccentState(path)"
       :class="{
         selected: isRowSelected(path),
         'root-row--draggable': projectId,
@@ -175,7 +198,10 @@ function onRowClick(path: string, e: MouseEvent) {
               +{{ rowByPath[path]!.remoteCount - 1 }}
             </small>
           </span>
-          <span v-else class="path-remote muted">{{ $t("workspace.remoteNoOrigin") }}</span>
+          <span
+            v-else-if="showRemoteMissingBadge(path)"
+            class="path-remote path-remote--aux"
+          >{{ $t("workspace.remoteNoOrigin") }}</span>
         </div>
       </div>
       <div v-else class="icon-card">
@@ -184,13 +210,21 @@ function onRowClick(path: string, e: MouseEvent) {
         <code class="path-mini">{{ path }}</code>
         <span v-if="rowMetaPending(path)" class="mini muted">…</span>
         <span v-else-if="rowByPath[path]?.gitError" class="mini muted">{{ $t("workspace.notGitRepo") }}</span>
-        <span v-else-if="rowByPath[path]?.clean" class="mini">{{ $t("workspace.statusClean") }}</span>
-        <span v-else class="mini dirty">
-          <WorkingTreeStatusLabel
-            :tracked-changes="rowByPath[path]!.trackedChanges"
-            :untracked-files="rowByPath[path]!.untrackedFiles"
-          />
-        </span>
+        <template v-else>
+          <span
+            v-if="showRemoteMissingBadge(path)"
+            class="mini path-remote-line"
+          >{{ $t("workspace.remoteNoOrigin") }}</span>
+          <div class="icon-card-status">
+          <span v-if="rowByPath[path]?.clean" class="mini">{{ $t("workspace.statusClean") }}</span>
+          <span v-else class="mini dirty">
+            <WorkingTreeStatusLabel
+              :tracked-changes="rowByPath[path]!.trackedChanges"
+              :untracked-files="rowByPath[path]!.untrackedFiles"
+            />
+          </span>
+          </div>
+        </template>
       </div>
     </li>
   </ul>
@@ -258,6 +292,58 @@ function onRowClick(path: string, e: MouseEvent) {
   box-shadow: inset 0 0 0 1px rgba(122, 162, 255, 0.35);
 }
 
+/* FOLDER-STATUS-01: Git 저장소 아님 — 목록·아이콘 공통(행 `li`) */
+.root-row[data-state="non-git"] {
+  background: rgb(148 163 184 / 0.1);
+  box-shadow: inset 3px 0 0 0 rgb(100 116 139 / 0.92);
+}
+
+.root-row[data-state="non-git"]:hover {
+  background: rgb(148 163 184 / 0.16);
+}
+
+.root-row[data-state="non-git"].selected {
+  border-color: #7aa2ff;
+  background: rgba(122, 162, 255, 0.11);
+  box-shadow: inset 3px 0 0 0 rgb(100 116 139 / 0.92);
+}
+
+.root-row[data-state="non-git"].selected:hover {
+  background: rgba(122, 162, 255, 0.16);
+}
+
+.root-row[data-state="non-git"].root-row--drag-moving {
+  box-shadow:
+    inset 3px 0 0 0 rgb(100 116 139 / 0.92),
+    inset 0 0 0 1px rgba(122, 162, 255, 0.35);
+}
+
+/* Git인데 원격 URL 없음 — 비Git(slate)과 구분되는 왼쪽 앰버 바 */
+.root-row[data-state="no-remote"] {
+  background: rgb(251 191 36 / 0.09);
+  box-shadow: inset 3px 0 0 0 rgb(217 119 6 / 0.9);
+}
+
+.root-row[data-state="no-remote"]:hover {
+  background: rgb(251 191 36 / 0.14);
+}
+
+.root-row[data-state="no-remote"].selected {
+  border-color: #7aa2ff;
+  background: rgba(122, 162, 255, 0.11);
+  box-shadow: inset 3px 0 0 0 rgb(217 119 6 / 0.9);
+}
+
+.root-row[data-state="no-remote"].selected:hover {
+  background: rgba(122, 162, 255, 0.16);
+}
+
+.root-row[data-state="no-remote"].root-row--drag-moving {
+  box-shadow:
+    inset 3px 0 0 0 rgb(217 119 6 / 0.9),
+    inset 0 0 0 1px rgba(122, 162, 255, 0.35);
+}
+
 .row {
   display: flex;
   flex-direction: column;
@@ -289,6 +375,8 @@ function onRowClick(path: string, e: MouseEvent) {
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 5px;
 }
 
@@ -326,6 +414,15 @@ function onRowClick(path: string, e: MouseEvent) {
   background: rgb(148 163 184 / 14%);
 }
 
+.icon-card-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+}
+
 /* 2행: 경로 텍스트들 (보조) */
 .row-sub {
   display: flex;
@@ -354,6 +451,11 @@ function onRowClick(path: string, e: MouseEvent) {
   text-overflow: ellipsis;
   min-width: 0;
   line-height: 1.3;
+  font-style: normal;
+}
+
+.path-remote--aux {
+  opacity: 0.72;
   font-style: normal;
 }
 
@@ -400,5 +502,14 @@ function onRowClick(path: string, e: MouseEvent) {
 
 .mini {
   font-size: 0.62rem;
+}
+
+.path-remote-line {
+  display: block;
+  width: 100%;
+  font-size: 0.58rem;
+  opacity: 0.72;
+  line-height: 1.3;
+  text-align: center;
 }
 </style>
