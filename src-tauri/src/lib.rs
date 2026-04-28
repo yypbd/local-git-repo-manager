@@ -866,6 +866,9 @@ fn save_bootstrap(path: &PathBuf, bootstrap: &BootstrapState) -> Result<(), Stri
 pub fn run() {
     let state_path = persistence::default_state_path();
     let bootstrap_path = default_bootstrap_path();
+    if let Err(error) = persistence::backup_state_if_stale(&state_path) {
+        eprintln!("failed to backup state on boot: {error}");
+    }
     let persisted_state = persistence::load_state(&state_path).unwrap_or_else(|error| {
         eprintln!("failed to load state: {error}");
         persistence::PersistedState::default()

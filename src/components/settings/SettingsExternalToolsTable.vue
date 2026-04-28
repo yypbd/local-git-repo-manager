@@ -52,10 +52,9 @@ const browseExecutable = async (tool: Tool) => {
 
     <template v-else>
       <ul class="tool-list">
-        <li v-for="(tool, index) in tools" :key="tool.id" class="tool-row">
-          <div class="tool-index">{{ $t("settings.externalToolsSlot", { n: index + 1 }) }}</div>
-          <div class="fields">
-            <label class="field">
+        <li v-for="tool in tools" :key="tool.id" class="tool-row">
+          <div class="tool-head">
+            <label class="field field-head">
               <span>{{ $t("settings.externalToolsLabel") }}</span>
               <Input
                 type="text"
@@ -64,22 +63,28 @@ const browseExecutable = async (tool: Tool) => {
                 @update:modelValue="onPatch(tool.id, 'label', $event)"
               />
             </label>
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              class="btn-remove btn-action"
+              @click="emit('remove', tool.id)"
+            >
+              {{ $t("settings.externalToolsRemove") }}
+            </Button>
+          </div>
+          <div class="fields">
             <label class="field">
               <span>{{ $t("settings.externalToolsCommand") }}</span>
-              <div class="command-row">
-                <Input
-                  type="text"
-                  class="command-input"
-                  :placeholder="t('settings.externalToolsCommandPh')"
-                  :model-value="tool.command"
-                  @update:modelValue="onPatch(tool.id, 'command', $event)"
-                />
-                <Button type="button" size="sm" variant="secondary" class="btn-browse" @click="browseExecutable(tool)">
-                  {{ $t("settings.externalToolsBrowse") }}
-                </Button>
-              </div>
+              <Input
+                type="text"
+                class="command-input"
+                :placeholder="t('settings.externalToolsCommandPh')"
+                :model-value="tool.command"
+                @update:modelValue="onPatch(tool.id, 'command', $event)"
+              />
             </label>
-            <label class="field field-wide">
+            <label class="field">
               <span>{{ $t("settings.externalToolsArgs") }}</span>
               <Input
                 type="text"
@@ -88,10 +93,19 @@ const browseExecutable = async (tool: Tool) => {
                 @update:modelValue="onPatch(tool.id, 'argsTemplate', $event)"
               />
             </label>
+            <div class="field field-action">
+              <span class="field-action-label">&nbsp;</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                class="btn-action btn-browse"
+                @click="browseExecutable(tool)"
+              >
+                {{ $t("settings.externalToolsBrowse") }}
+              </Button>
+            </div>
           </div>
-          <Button type="button" size="sm" variant="destructive" class="btn-remove" @click="emit('remove', tool.id)">
-            {{ $t("settings.externalToolsRemove") }}
-          </Button>
         </li>
       </ul>
       <Button type="button" size="sm" variant="secondary" class="btn-add-more" @click="emit('add')">
@@ -163,30 +177,24 @@ const browseExecutable = async (tool: Tool) => {
 
 .tool-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px 12px;
-  align-items: start;
+  gap: 12px;
   padding: 12px 14px;
   border: 1px solid var(--color-border, #2a3142);
   border-radius: 10px;
   background: rgb(255 255 255 / 4%);
 }
 
-.tool-index {
-  grid-column: 1 / -1;
-  grid-row: 1;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #6b7280;
+.tool-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
+  align-items: end;
 }
 
 .fields {
-  grid-column: 1;
-  grid-row: 2;
   display: grid;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.55fr) auto;
+  gap: 10px 12px;
   min-width: 0;
 }
 
@@ -206,23 +214,30 @@ const browseExecutable = async (tool: Tool) => {
   min-width: 0;
 }
 
-.command-row {
-  display: flex;
-  gap: 8px;
-  align-items: stretch;
-}
-
 .command-input {
-  flex: 1;
   min-width: 0;
 }
 
-.btn-browse {
-  flex: 0 0 auto;
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  white-space: nowrap;
+.field-head {
+  min-width: 0;
+}
+
+.field-action {
+  width: fit-content;
+}
+
+.field-action-label {
+  visibility: hidden;
+}
+
+.btn-action {
+  padding: 4px 8px;
+  min-height: 26px;
+  font-size: 0.74rem;
   border-radius: 6px;
+}
+
+.btn-browse {
   border: 1px solid var(--color-border, #3d465c);
   background: rgb(255 255 255 / 8%);
   color: inherit;
@@ -233,17 +248,13 @@ const browseExecutable = async (tool: Tool) => {
   background: rgb(255 255 255 / 12%);
 }
 
-.field-wide {
-  grid-column: 1 / -1;
+.btn-remove {
+  justify-self: end;
 }
 
-.btn-remove {
-  grid-column: 2;
-  grid-row: 2;
-  justify-self: end;
-  align-self: start;
-  font-size: 0.8rem;
-  padding: 6px 10px;
+.btn-remove.btn-action {
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .btn-add-more {
@@ -260,5 +271,24 @@ const browseExecutable = async (tool: Tool) => {
 .btn-add-more:hover {
   color: #e5e7eb;
   border-color: #6b7280;
+}
+
+@media (max-width: 860px) {
+  .tool-head {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .btn-remove {
+    justify-self: end;
+  }
+
+  .fields {
+    grid-template-columns: 1fr;
+  }
+
+  .field-action {
+    justify-self: end;
+  }
 }
 </style>

@@ -118,7 +118,7 @@ watch(
 <template>
   <DialogRoot :open="modelValue" @update:open="(v: boolean) => { if (!v) close() }">
     <DialogContent
-      class="w-[min(44rem,100%)] max-h-[min(88vh,900px)] flex flex-col max-w-none"
+      class="w-[min(44rem,100%)] h-[min(88vh,900px)] flex flex-col max-w-none"
       :aria-label="$t('settings.title')"
     >
       <!-- Header -->
@@ -127,14 +127,14 @@ watch(
       </DialogHeader>
 
       <!-- Scrollable body with tabs -->
-      <div class="min-h-0 flex-1 overflow-auto p-4">
+      <div class="settings-body min-h-0 flex-1 overflow-auto p-4">
         <TabsRoot :model-value="activeTab" @update:model-value="(v) => activeTab = v as SettingsTab">
-          <TabsList class="flex flex-wrap gap-2 mb-4 border-b border-[var(--border)] pb-3">
+          <TabsList class="settings-tabs" :aria-label="$t('settings.title')">
             <TabsTrigger
               v-for="tab in tabList"
               :key="tab.id"
               :value="tab.id"
-              class="btn btn-sm btn-secondary rounded-sm px-3 text-xs border border-[#4a5568] bg-[#1a2029] text-[var(--foreground)] cursor-pointer transition-colors data-[state=active]:border-[#7aa2ff] data-[state=active]:bg-[#1a2440] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+              class="settings-tab-trigger"
             >
               {{ $t(tab.labelKey) }}
             </TabsTrigger>
@@ -180,5 +180,46 @@ watch(
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+.settings-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.settings-tab-trigger {
+  display: inline-flex;
+  justify-content: flex-start;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.settings-tab-trigger[data-state="active"] {
+  color: var(--foreground);
+  border-bottom-color: #7aa2ff;
+}
+
+.settings-tab-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
+  border-radius: 6px;
+}
+
+.settings-body {
+  min-height: 24rem;
 }
 </style>

@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::{Duration, SystemTime};
 
 use serde::{Deserialize, Serialize};
 
@@ -87,6 +88,41 @@ pub fn save_state_atomic(path: &Path, state: &PersistedState) -> Result<(), Stri
         serde_json::to_string_pretty(state).map_err(|e| format!("failed to serialize state: {e}"))?;
     fs::write(&tmp_path, serialized).map_err(|e| format!("failed to write temp state: {e}"))?;
     fs::rename(&tmp_path, path).map_err(|e| format!("failed to replace state atomically: {e}"))?;
+    Ok(())
+}
+
+pub fn backup_state_if_stale(path: &Path) -> Result<(), String> {
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let Some(parent) = path.parent() else {
+        return Ok(());
+    };
+
+    let backup_dir = parent.join("backups");
+    fs::create_dir_all(&backup_dir).map_err(|e| format!("failed to create backup dir: {e}"))?;
+    let backup_path = backup_dir.join("state.backup.json");
+
+    let should_backup = if !backup_path.exists() {
+        true
+    } else {
+        let modified = fs::metadata(&backup_path)
+            .and_then(|meta| meta.modified())
+            .map_err(|e| format!("failed to inspect backup file: {e}"))?;
+        let elapsed = SystemTime::now()
+            .duration_since(modified)
+            .unwrap_or(Duration::from_secs(0));
+        elapsed >= Duration::from_secs(60 * 60 * 24 * 7)
+    };
+
+    if should_backup {
+        let tmp_path = backup_path.with_extension("json.tmp");
+        fs::copy(path, &tmp_path).map_err(|e| format!("failed to copy state backup: {e}"))?;
+        fs::rename(&tmp_path, &backup_path)
+            .map_err(|e| format!("failed to replace state backup: {e}"))?;
+    }
+
     Ok(())
 }
 
