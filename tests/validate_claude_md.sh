@@ -87,7 +87,6 @@ check_file_exists "src/components/project/ProjectListItem.vue"
 check_file_exists "src/components/project/RenameProjectDialog.vue"
 
 # components/settings/
-check_file_exists "src/components/settings/SettingsDataRootSection.vue"
 check_file_exists "src/components/settings/SettingsDialog.vue"
 check_file_exists "src/components/settings/SettingsExternalToolsTable.vue"
 check_file_exists "src/components/settings/SettingsGitSection.vue"

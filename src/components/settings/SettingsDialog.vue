@@ -4,11 +4,9 @@ import { useI18n } from "vue-i18n";
 import { invoke } from "@tauri-apps/api/core";
 import { DialogRoot } from "radix-vue";
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs/index";
-import SettingsDataRootSection from "@/components/settings/SettingsDataRootSection.vue";
 import SettingsExternalToolsTable from "@/components/settings/SettingsExternalToolsTable.vue";
 import SettingsGitSection from "@/components/settings/SettingsGitSection.vue";
 import SettingsLocale from "@/components/settings/SettingsLocale.vue";
-import { getBootstrap } from "@/composables/bootstrap";
 import { useToastStore } from "@/stores/toast";
 import DialogContent from "@/components/ui/DialogContent.vue";
 import DialogHeader from "@/components/ui/DialogHeader.vue";
@@ -22,8 +20,6 @@ const emit = defineEmits<{ "update:modelValue": [open: boolean] }>();
 const { t, locale: i18nLocale } = useI18n();
 const { push: toast } = useToastStore();
 
-const recommendedDataRoot = ref("");
-
 type SettingsTab = "general" | "external";
 
 const tabList: { id: SettingsTab; labelKey: string }[] = [
@@ -33,7 +29,6 @@ const tabList: { id: SettingsTab; labelKey: string }[] = [
 
 const activeTab = ref<SettingsTab>("general");
 const settings = ref({
-  dataRootPath: "",
   locale: "ko",
   gitExecutablePath: "",
   logMaskSensitive: true,
@@ -46,16 +41,9 @@ const load = async () => {
     const got = await invoke<typeof settings.value>("get_settings");
     settings.value = {
       ...got,
-      dataRootPath: got.dataRootPath ?? "",
       gitExecutablePath: got.gitExecutablePath ?? "",
     };
   } catch {}
-  try {
-    const b = await getBootstrap();
-    recommendedDataRoot.value = b?.recommendedDataRoot ?? "";
-  } catch {
-    recommendedDataRoot.value = "";
-  }
 };
 
 function applyUiLocale(loc: string) {
@@ -73,7 +61,6 @@ const save = async () => {
     const saved = await invoke<typeof settings.value>("update_settings", { next: settings.value });
     settings.value = {
       ...saved,
-      dataRootPath: saved.dataRootPath ?? "",
       gitExecutablePath: saved.gitExecutablePath ?? "",
     };
     applyUiLocale(saved.locale);
@@ -154,11 +141,6 @@ watch(
           </TabsList>
 
           <TabsContent value="general" class="grid gap-6 max-w-[42rem] focus-visible:outline-none">
-            <SettingsDataRootSection
-              :data-root-path="settings.dataRootPath"
-              :recommended-path="recommendedDataRoot"
-              @update="(path) => (settings.dataRootPath = path)"
-            />
             <SettingsLocale :locale="settings.locale" @update="onLocaleChange" />
             <SettingsGitSection
               :git-executable-path="settings.gitExecutablePath"

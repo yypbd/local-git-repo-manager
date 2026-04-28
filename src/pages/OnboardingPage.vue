@@ -11,7 +11,6 @@ import Select from "@/components/ui/Select.vue";
 import Button from "@/components/ui/Button.vue";
 
 type AppSettingsPayload = {
-  dataRootPath?: string;
   locale: string;
   gitExecutablePath?: string;
   logMaskSensitive: boolean;
@@ -75,7 +74,6 @@ const completeOnboarding = async () => {
       next: {
         ...s,
         locale: selectedLocale.value,
-        dataRootPath: confirmed.confirmedDataRoot ?? s.dataRootPath,
       },
     });
   } catch (e) {

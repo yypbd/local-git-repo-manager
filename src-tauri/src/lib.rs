@@ -463,11 +463,10 @@ fn confirm_data_root(path: String, state: tauri::State<AppState>) -> Result<Boot
     )?;
 
     {
-        let mut settings = state
+        let settings = state
             .settings
             .lock()
             .map_err(|_| "failed to lock settings".to_string())?;
-        settings.data_root_path = Some(confirmed.clone());
         persistence::save_app_settings(&settings.clone()).map_err(|e| e.to_string())?;
     }
 
@@ -686,19 +685,6 @@ fn update_settings(
         .map_err(|_| "failed to lock settings".to_string())?;
     *settings = next.clone();
     persistence::save_app_settings(&next).map_err(|e| e.to_string())?;
-    if let Some(ref root) = next.data_root_path {
-        let trimmed = root.trim();
-        if !trimmed.is_empty() {
-            let pb = PathBuf::from(trimmed);
-            fs::create_dir_all(&pb).map_err(|e| format!("failed to create data root: {e}"))?;
-            save_bootstrap(
-                &state.bootstrap_path,
-                &BootstrapState {
-                    confirmed_data_root: Some(trimmed.to_string()),
-                },
-            )?;
-        }
-    }
     Ok(next)
 }
 
@@ -898,24 +884,10 @@ pub fn run() {
         Vec::new()
     });
 
-    let bootstrap = load_bootstrap(&bootstrap_path).unwrap_or_else(|e| {
-        eprintln!("failed to load bootstrap: {e}");
-        BootstrapState::default()
-    });
-
-    let mut app_settings = persistence::load_app_settings().unwrap_or_else(|e| {
+    let app_settings = persistence::load_app_settings().unwrap_or_else(|e| {
         eprintln!("failed to load app settings: {e}");
         settings::AppSettings::default()
     });
-
-    let dr = app_settings
-        .data_root_path
-        .as_deref()
-        .map(str::trim)
-        .unwrap_or("");
-    if dr.is_empty() {
-        app_settings.data_root_path = bootstrap.confirmed_data_root.clone();
-    }
 
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
