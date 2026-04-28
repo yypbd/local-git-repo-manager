@@ -311,6 +311,7 @@ onUnmounted(() => {
         <ProjectDeleteDialog
           v-if="deleteStep === 'dialog' && deleting"
           :project="deleting"
+          :has-other-projects="projects.some((p) => p.id !== deleting.id)"
           @close="closeDeleteFlow"
           @delete-only="onDeleteOnly"
           @move-then-delete="onDeleteMoveFirst"
