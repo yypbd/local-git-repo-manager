@@ -9,7 +9,6 @@ import AlertDialogTitle from "@/components/ui/AlertDialogTitle.vue";
 import AlertDialogDescription from "@/components/ui/AlertDialogDescription.vue";
 import AlertDialogFooter from "@/components/ui/AlertDialogFooter.vue";
 import AlertDialogCancel from "@/components/ui/AlertDialogCancel.vue";
-import AlertDialogAction from "@/components/ui/AlertDialogAction.vue";
 import Button from "@/components/ui/Button.vue";
 
 const props = defineProps<{ project: Project; hasOtherProjects: boolean }>();
@@ -50,13 +49,13 @@ const linkedFolderCount = computed(() => props.project.rootPaths.length);
           >
             {{ $t("workspace.projectDeleteMoveFoldersFirst") }}
           </Button>
-          <AlertDialogAction @click="emit('deleteOnly')">
+          <Button type="button" size="sm" variant="destructive" @click="emit('deleteOnly')">
             {{ $t("workspace.projectDeleteUnlinkOnly") }}
-          </AlertDialogAction>
+          </Button>
         </template>
-        <AlertDialogAction v-else @click="emit('deleteOnly')">
+        <Button v-else type="button" size="sm" variant="destructive" @click="emit('deleteOnly')">
           {{ $t("workspace.projectDeleteConfirm") }}
-        </AlertDialogAction>
+        </Button>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialogRoot>
